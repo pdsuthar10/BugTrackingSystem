@@ -1,5 +1,6 @@
 package com.info6250.bts.dao;
 
+import com.info6250.bts.pojo.Project;
 import com.info6250.bts.pojo.Project_User_Role;
 import com.info6250.bts.pojo.Role;
 import com.info6250.bts.pojo.User;
@@ -77,4 +78,18 @@ public class UserDAO extends DAO{
         }
         return result;
     }
+    public List<User> findUnassignedUsersProject(Project project){
+        List<User> allUsers = findAllusers();
+        List<User> assignedUsers = new ArrayList<>();
+        for(Project_User_Role t : project.getAssignedUsers()){
+            assignedUsers.add(t.getUser());
+        }
+        List<User> result = new ArrayList<>();
+        for(User u : allUsers){
+            if(!assignedUsers.contains(u))
+                result.add(u);
+        }
+        return result;
+    }
+
 }

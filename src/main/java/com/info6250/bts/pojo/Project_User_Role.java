@@ -80,12 +80,12 @@ public class Project_User_Role implements Serializable{
         this.role = role;
     }
 
-    @Override
-    public String toString() {
-        return "Project_User_Role{" +
-                ", project=" + project +
-                ", user=" + user +
-                ", role=" + role +
-                '}';
-    }
+//    @Override
+//    public String toString() {
+//        return "Project_User_Role{" +
+//                ", project=" + project +
+//                ", user=" + user +
+//                ", role=" + role +
+//                '}';
+//    }
 }

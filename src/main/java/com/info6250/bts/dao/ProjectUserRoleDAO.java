@@ -4,6 +4,7 @@ import com.info6250.bts.pojo.Project;
 import com.info6250.bts.pojo.Project_User_Role;
 import com.info6250.bts.pojo.Role;
 import com.info6250.bts.pojo.User;
+import org.hibernate.HibernateException;
 import org.hibernate.query.Query;
 import org.springframework.stereotype.Repository;
 
@@ -54,6 +55,8 @@ public class ProjectUserRoleDAO extends DAO{
         return result;
     }
 
+
+
     public int addDevelopers(int project_id, List<User> developersToAdd, RoleDAO roleDAO,
                              ProjectDAO projectDAO){
         Role role = roleDAO.findRoleByName("developer");
@@ -67,6 +70,23 @@ public class ProjectUserRoleDAO extends DAO{
             getSession().save(p);
         }
         commit();
+        return 1;
+    }
+
+    public int updateManager(Project project, User manager){
+        try {
+            begin();
+            Project_User_Role project_user_role = findByProjectIDAndRole(project.getId(), "manager");
+            project_user_role.setUser(manager);
+            getSession().update(project_user_role);
+            commit();
+        }catch (HibernateException e){
+            e.printStackTrace();
+            rollback();
+            return -1;
+        }finally {
+            close();
+        }
         return 1;
     }
 

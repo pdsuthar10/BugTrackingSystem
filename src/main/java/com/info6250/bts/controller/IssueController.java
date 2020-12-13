@@ -1,10 +1,7 @@
 package com.info6250.bts.controller;
 
 import com.info6250.bts.dao.*;
-import com.info6250.bts.pojo.Priority;
-import com.info6250.bts.pojo.Project;
-import com.info6250.bts.pojo.Status;
-import com.info6250.bts.pojo.User;
+import com.info6250.bts.pojo.*;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,6 +15,12 @@ import java.util.List;
 
 @Controller
 public class IssueController {
+
+    @GetMapping("/issues")
+    public String issuesList(IssueDAO issueDAO, Model model){
+        model.addAttribute("issues", issueDAO.findAllIssues());
+        return "issues";
+    }
 
     @GetMapping("/project/{project_id}/issues/create-issue")
     public String createIssue(@PathVariable(name = "project_id") String project_id,
@@ -80,5 +83,35 @@ public class IssueController {
                 openedBy);
 
         return "redirect:/admin";
+    }
+
+    @GetMapping("/project/{project_id}/issues/{issue_id}/details")
+    public String issueDetails(@PathVariable(name = "project_id") String project_id,
+                               @PathVariable(name = "issue_id") String issue_id,
+                               ProjectDAO projectDAO, IssueDAO issueDAO, HttpSession session,
+                               Model model){
+        try {
+            Integer.parseInt(project_id);
+            Integer.parseInt(issue_id);
+        }catch (Exception e){
+            User user = (User) session.getAttribute("user");
+            if(user.isAdmin())
+                return "redirect:/admin";
+            else
+                return "redirect:/user";
+        }
+        Project project = projectDAO.findProjectById(Integer.parseInt(project_id));
+        Issue issue = issueDAO.findById(Integer.parseInt(issue_id));
+        if(project == null || issue == null){
+            User user = (User) session.getAttribute("user");
+            if(user.isAdmin())
+                return "redirect:/admin";
+            else
+                return "redirect:/user";
+        }
+
+
+        model.addAttribute("issue", issue);
+        return "issue-details";
     }
 }

@@ -2,7 +2,10 @@ package com.info6250.bts.dao;
 
 import com.info6250.bts.pojo.*;
 import org.hibernate.HibernateException;
+import org.hibernate.query.Query;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
 
 @Repository
 public class IssueDAO extends DAO{
@@ -30,6 +33,17 @@ public class IssueDAO extends DAO{
             close();
         }
         return 1;
+    }
 
+    public Issue findById(long id){
+        String hql = "FROM Issue where id =:id";
+        Query query = getSession().createQuery(hql).setParameter("id",id);
+        return (Issue) query.uniqueResult();
+    }
+
+    public List<Issue> findAllIssues(){
+        String hql = "FROM Issue";
+        Query query = getSession().createQuery(hql);
+        return query.list();
     }
 }

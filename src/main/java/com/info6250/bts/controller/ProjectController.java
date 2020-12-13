@@ -21,6 +21,12 @@ import java.util.List;
 @Controller
 public class ProjectController {
 
+    @GetMapping("/projects")
+    public String projectList(ProjectDAO projectDAO, Model model){
+        model.addAttribute("projects", projectDAO.findAllProjects());
+        return "projects";
+    }
+
     @GetMapping("/project/{project_id}/add-developers")
     public String addDevelopers(@PathVariable(name = "project_id") String project_id,
                                 HttpSession session, ProjectDAO projectDAO,
@@ -88,6 +94,7 @@ public class ProjectController {
             return "redirect:/user/dashboard";
         }
         Project project = projectDAO.findProjectById(id);
+        projectDAO.getSession().refresh(project);
         if(project == null) return "redirect:/user/dashboard";
         User manager = project.getManager();
 

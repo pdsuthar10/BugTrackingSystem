@@ -78,6 +78,18 @@ public class User implements Serializable{
        return false;
     }
 
+    public boolean isDeveloper(){
+        for(Project_User_Role p : this.getProjects()){
+            if(p.getRole().getName().equals("developer")) return true;
+        }
+        return false;
+    }
+
+    public boolean assignedIssue(Issue issue){
+        if(issue.getAssignedTo().getUsername().equals(this.username)) return true;
+        return false;
+    }
+
     public void setUsername(String userName) {
         this.username = userName;
     }

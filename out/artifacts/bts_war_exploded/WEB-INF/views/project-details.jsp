@@ -46,6 +46,7 @@
                     <td>Title</td>
                     <td>Description</td>
                     <td>Status</td>
+                    <td>Type</td>
                     <td>Priority</td>
                     <td>Opened By</td>
                     <td>Assigned To</td>
@@ -61,13 +62,14 @@
                         <td>${issue.title}</td>
                         <td>${issue.description}</td>
                         <td>${issue.status.name}</td>
+                        <td>${issue.issueType}</td>
                         <td>${issue.priority.name}</td>
                         <td>${issue.openedBy.name} (${issue.openedBy.username})</td>
                         <td>${issue.assignedTo.name} (${issue.assignedTo.username})</td>
                         <td>${issue.createdOn}</td>
                         <td>${issue.modifiedOn.toLocaleString()}</td>
                         <td>
-                            <a href="">View</a>&nbsp;|&nbsp;
+                            <a href="/bts/project/${project.id}/issues/${issue.id}/details">View</a>&nbsp;|&nbsp;
                             <c:if test="${sessionScope.user.admin || sessionScope.user.isDeveloperForProject(project)
                             || sessionScope.user.isManagerForProject(project) }">
                                 <a href="">Edit</a>&nbsp;|&nbsp;

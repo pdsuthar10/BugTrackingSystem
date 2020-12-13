@@ -1,9 +1,7 @@
 package com.info6250.bts.controller;
 
-import com.info6250.bts.dao.ProjectDAO;
-import com.info6250.bts.dao.ProjectUserRoleDAO;
-import com.info6250.bts.dao.RoleDAO;
-import com.info6250.bts.dao.UserDAO;
+import com.info6250.bts.dao.*;
+import com.info6250.bts.pojo.Issue;
 import com.info6250.bts.pojo.Project;
 import com.info6250.bts.pojo.Project_User_Role;
 import com.info6250.bts.pojo.User;
@@ -18,6 +16,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.support.SessionStatus;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.servlet.http.HttpServletRequest;
 import java.text.ParseException;
@@ -38,17 +37,20 @@ public class AdminController {
 
 
     @GetMapping("/admin")
-    public String adminDashboard(Model model, ProjectDAO projectDao, ProjectUserRoleDAO projectUserRoleDAO){
+    public String adminDashboard(Model model, ProjectDAO projectDao, IssueDAO issueDAO){
 
         List<Project> projects = projectDao.findAllProjects();
-        Map<Integer, User> managerMap = new HashMap<Integer, User>();
-        for(Project p : projects){
-            Project_User_Role pu = projectUserRoleDAO.findByProjectIDAndRole(p.getId(),"manager");
-            managerMap.put(p.getId(),pu.getUser());
-        }
+        List<Issue> issues = issueDAO.findAllIssues();
+//        Map<Integer, User> managerMap = new HashMap<Integer, User>();
+//        for(Project p : projects){
+//            projectDao.getSession().refresh(p);
+//            Project_User_Role pu = projectUserRoleDAO.findByProjectIDAndRole(p.getId(),"manager");
+//            managerMap.put(p.getId(),pu.getUser());
+//        }
         model.addAttribute("projects", projects);
-        model.addAttribute("managerMap", managerMap);
-        model.addAttribute("projectUserRoleDAO", projectUserRoleDAO);
+        model.addAttribute("issues", issues);
+//        model.addAttribute("managerMap", managerMap);
+//        model.addAttribute("projectUserRoleDAO", projectUserRoleDAO);
         return "admin";
     }
 
@@ -69,13 +71,16 @@ public class AdminController {
             return "redirect:/admin";
         }
         Project project = projectDao.findProjectById(Integer.parseInt(id));
+        projectDao.getSession().refresh(project);
         if(project == null) return "redirect:/admin";
         System.out.println("validator........ page return");
         System.out.println(project.getId()+", "+project.getName()+", "+project.getStartDate()+
                 ", "+project.getTargetEndDate()+", "+project.getManager().getName());
+        List<User> users = userDao.findUnassignedUsersProject(project);
+        users.add(project.getManager());
         model.addAttribute("project",project);
         model.addAttribute("manager", project.getManager());
-        model.addAttribute("users", userDao.findAllusers());
+        model.addAttribute("users", users);
         return "edit-project";
     }
 
@@ -84,7 +89,7 @@ public class AdminController {
                                HttpServletRequest request, Model model, UserDAO userDao,
                                RoleDAO roleDao, ProjectUserRoleDAO projectUserRoleDao,
                                @ModelAttribute("project") Project projectToValidate, BindingResult result,
-                               SessionStatus status) throws ParseException {
+                               SessionStatus status, RedirectAttributes redirectAttributes) throws ParseException {
 
         try{
             Integer.parseInt(id);
@@ -98,7 +103,7 @@ public class AdminController {
         if(result.hasErrors()){
             List<User> allUsers = userDao.findAllusers();
             model.addAttribute("users", allUsers);
-            return "create-project";
+            return "edit-project";
         }
 
         status.setComplete();
@@ -122,8 +127,11 @@ public class AdminController {
         User user = userDao.findUserByUsername(manager);
 //        project.updateManager(user);
 //        projectToValidate.setId(project.getId());
+        System.out.println("in edit project.......");
         System.out.println(projectToValidate);
         projectDao.updateProject(project, user, roleDao, projectUserRoleDao);
+        if(!project.getManager().getUsername().equals(user.getUsername())) projectUserRoleDao.updateManager(project, user);
+
         return "redirect:/admin";
 
     }
@@ -172,6 +180,7 @@ public class AdminController {
             return "redirect:/admin";
         }
         Project project = projectDao.findProjectById(Integer.parseInt(id));
+
         return "redirect:/admin";
     }
 

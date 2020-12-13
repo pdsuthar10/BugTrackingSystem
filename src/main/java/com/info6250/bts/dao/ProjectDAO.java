@@ -36,15 +36,16 @@ public class ProjectDAO extends DAO {
 
     public int addProject(Project projectToAdd, User manager, RoleDAO roleDao, ProjectUserRoleDAO projectUserRoleDao){
         try{
+            begin();
             Role role = roleDao.findRoleByName("manager");
             Project_User_Role project_user_role = new Project_User_Role();
             project_user_role.setRole(role);
-//            project_user_role.setProject(projectToAdd);
             project_user_role.setUser(manager);
+            getSession().save(project_user_role);
+
             projectToAdd.addUser(project_user_role);
-            begin();
             getSession().save(projectToAdd);
-//            getSession().save(project_user_role);
+
             commit();
         }catch (HibernateException e){
             e.printStackTrace();
@@ -58,16 +59,20 @@ public class ProjectDAO extends DAO {
 
     public int updateProject(Project projectToUpdate, User manager, RoleDAO roleDao, ProjectUserRoleDAO projectUserRoleDao){
         try{
-            Project_User_Role project_user_role= projectUserRoleDao.findByProjectIDAndRole(projectToUpdate.getId(),"manager");
-            projectToUpdate.removeUser(project_user_role);
-            project_user_role.setUser(manager);
-            projectToUpdate.addUser(project_user_role);
-//            project_user_role.setProject(projectToUpdate);
             begin();
-            Session session = getSession();
+//            Project_User_Role project_user_role= projectUserRoleDao.findByProjectIDAndRole(projectToUpdate.getId(),"manager");
+//            projectToUpdate.removeUser(project_user_role);
+//            project_user_role.setUser(manager);
+
+//            projectToUpdate.addUser(project_user_role);
+//            projectToUpdate.updateManager(manager);
+//            project_user_role.setProject(projectToUpdate);
 //            session.update(project_user_role);
-            session.saveOrUpdate(projectToUpdate);
+            getSession().update(projectToUpdate);
+//            getSession().update(project_user_role);
             commit();
+//            getSession().refresh(projectToUpdate);
+//            getSession().refresh(project_user_role);
         }catch (HibernateException e){
             e.printStackTrace();
             rollback();
