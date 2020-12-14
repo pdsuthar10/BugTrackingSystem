@@ -80,14 +80,15 @@ public class UserDAO extends DAO{
     }
     public List<User> findUnassignedUsersProject(Project project){
         List<User> allUsers = findAllusers();
-        List<User> assignedUsers = new ArrayList<>();
+        List<String> assignedUsers = new ArrayList<>();
         for(Project_User_Role t : project.getAssignedUsers()){
-            assignedUsers.add(t.getUser());
+            assignedUsers.add(t.getUser().getUsername());
         }
         List<User> result = new ArrayList<>();
         for(User u : allUsers){
-            if(!assignedUsers.contains(u))
+            if(!assignedUsers.contains(u.getUsername())) {
                 result.add(u);
+            }
         }
         return result;
     }

@@ -21,11 +21,6 @@ import java.util.List;
 @Controller
 public class ProjectController {
 
-    @GetMapping("/projects")
-    public String projectList(ProjectDAO projectDAO, Model model){
-        model.addAttribute("projects", projectDAO.findAllProjects());
-        return "projects";
-    }
 
     @GetMapping("/project/{project_id}/add-developers")
     public String addDevelopers(@PathVariable(name = "project_id") String project_id,
@@ -38,12 +33,13 @@ public class ProjectController {
             return "redirect:/user/dashboard";
         }
         Project project = projectDAO.findProjectById(id);
+        projectDAO.getSession().refresh(project);
         if(project == null) return "redirect:/user/dashboard";
 
         User user = (User) session.getAttribute("user");
         User manager = project.getManager();
         if(user.isAdmin() || user.getUsername().equals(manager.getUsername())){
-            List<User> unassignedDevelopers = projectUserRoleDAO.findUnassignedDevelopers(project, userDAO, projectDAO);
+            List<User> unassignedDevelopers = userDAO.findUnassignedUsersProject(project);
             List<User> developers = project.getDevelopers();
             model.addAttribute("unassignedDevelopers", unassignedDevelopers);
             model.addAttribute("project", project);
@@ -61,11 +57,16 @@ public class ProjectController {
                                    Model model, UserDAO userDAO, ProjectUserRoleDAO projectUserRoleDAO,
                                    RoleDAO roleDAO, ProjectDAO projectDAO){
         String[] selectedDevelopers = request.getParameterValues("developersSelected");
+        boolean empty = false;
+        for(String s:selectedDevelopers){
+            if(s == null || s.trim().equals(""))
+                empty = true;
+        }
         String error = "";
         int id = Integer.parseInt(project_id);
         Project project = projectDAO.findProjectById(id);
         User manager = project.getManager();
-        if(selectedDevelopers == null || selectedDevelopers.length==0)
+        if(selectedDevelopers == null || selectedDevelopers.length==0 || empty)
         {
             error = "Please select atleast 1 developer to add.";
             model.addAttribute("error", error);
@@ -75,18 +76,19 @@ public class ProjectController {
             model.addAttribute("project", project);
             model.addAttribute("manager", manager);
             model.addAttribute("developers", developers);
-            return "add-developers";
+            model.addAttribute("issues", project.getIssues());
+            return "project-details";
         }
         List<User> developers = userDAO.findUsersByUsername(selectedDevelopers);
         projectUserRoleDAO.addDevelopers(Integer.parseInt(project_id),developers,roleDAO, projectDAO);
 
-        return "redirect:/admin";
+        return "redirect:/project/"+project_id+"/details";
     }
 
     @GetMapping("/project/{project_id}/details")
     public String projectDetails(@PathVariable(name = "project_id") String project_id,
                                  ProjectDAO projectDAO, Model model,
-                                 ProjectUserRoleDAO projectUserRoleDAO){
+                                 ProjectUserRoleDAO projectUserRoleDAO, UserDAO userDAO){
         int id;
         try {
             id = Integer.parseInt(project_id);
@@ -102,6 +104,44 @@ public class ProjectController {
         model.addAttribute("project", project);
         model.addAttribute("developers", project.getDevelopers());
         model.addAttribute("issues", project.getIssues());
+        model.addAttribute("unassignedDevelopers", userDAO.findUnassignedUsersProject(project));
         return "project-details";
+    }
+
+    @PostMapping("/project/{project_id}/remove-developer")
+    public String removeDeveloper(@PathVariable(name = "project_id") String project_id,
+                                  ProjectDAO projectDAO, UserDAO userDAO, ProjectUserRoleDAO projectUserRoleDAO,
+                                  Model model, HttpServletRequest request){
+        int id;
+        try {
+            id = Integer.parseInt(project_id);
+        }catch (Exception e){
+            return "not-found";
+        }
+        Project project = projectDAO.findProjectById(id);
+        if(project == null) return "not-found";
+
+        String username = request.getParameter("developerToRemove");
+        if(username == null || username.trim().equals("")) return "redirect:/user/dashboard";
+
+        User user = userDAO.findUserByUsername(username);
+        if(user == null) return "not-found";
+
+        int remove = projectUserRoleDAO.removeDeveloper(project, user);
+        if(remove == -1){
+            return "not-found";
+        }
+        if(remove == -2){
+            model.addAttribute("manager", project.getManager());
+            model.addAttribute("project", project);
+            model.addAttribute("developers", project.getDevelopers());
+            model.addAttribute("issues", project.getIssues());
+            model.addAttribute("errorDevelopers", "Developer has been assigned an issue." +
+                    "You can remove only after developer has 0 opened issues");
+            return "project-details";
+        }
+
+        return "redirect:/project/"+project_id+"/details";
+
     }
 }

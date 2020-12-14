@@ -1,10 +1,13 @@
 package com.info6250.bts.pojo;
 
+import org.hibernate.annotations.CreationTimestamp;
+
 import javax.persistence.*;
+import java.util.Date;
 
 @Entity
 @Table(name = "issues_comments")
-public class IssueComment {
+public class IssueComment{
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private long id;
@@ -18,7 +21,21 @@ public class IssueComment {
     @JoinColumn(name = "issue_id")
     private Issue issue;
 
+    @CreationTimestamp
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "created_on")
+    private Date createdOn;
+
     public IssueComment() {
+    }
+
+
+    public Date getCreatedOn() {
+        return createdOn;
+    }
+
+    public void setCreatedOn(Date createdOn) {
+        this.createdOn = createdOn;
     }
 
     public long getId() {

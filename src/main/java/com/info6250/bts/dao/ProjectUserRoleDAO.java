@@ -1,9 +1,6 @@
 package com.info6250.bts.dao;
 
-import com.info6250.bts.pojo.Project;
-import com.info6250.bts.pojo.Project_User_Role;
-import com.info6250.bts.pojo.Role;
-import com.info6250.bts.pojo.User;
+import com.info6250.bts.pojo.*;
 import org.hibernate.HibernateException;
 import org.hibernate.query.Query;
 import org.springframework.stereotype.Repository;
@@ -14,16 +11,6 @@ import java.util.List;
 @Repository("projectUserRoleDao")
 public class ProjectUserRoleDAO extends DAO{
 
-//    public int addEntry(Project project, User user, Role role){
-//        Project_User_Role entry = new Project_User_Role();
-//        entry.setRole(role);
-//        entry.setProject(project);
-//        entry.setUser(user);
-//        begin();
-//        getSession().save(entry);
-//        commit();
-//        return 1;
-//    }
 
     public Project_User_Role findByProjectIDAndRole(int project_id, String role_name){
         String hql = "from Project_User_Role where project.id =: project_id and role.name =: role_name";
@@ -33,15 +20,6 @@ public class ProjectUserRoleDAO extends DAO{
         return (Project_User_Role) query.uniqueResult();
     }
 
-//    public List<User> findUsersOfProjectByType(Project project, String type){
-//        List<Project_User_Role> list = project.getAssignedUsers();
-//        List<User> result = new ArrayList<User>();
-//        for(Project_User_Role p: list){
-//            if(p.getRole().getName().equals(type))
-//                result.add(p.getUser());
-//        }
-//        return result;
-//    }
 
     public List<User> findUnassignedDevelopers(Project project, UserDAO userDAO, ProjectDAO projectDAO){
         List<User> developers = project.getDevelopers();
@@ -81,6 +59,41 @@ public class ProjectUserRoleDAO extends DAO{
             getSession().update(project_user_role);
             commit();
         }catch (HibernateException e){
+            e.printStackTrace();
+            rollback();
+            return -1;
+        }finally {
+            close();
+        }
+        return 1;
+    }
+
+    public int removeDeveloper(Project project, User developer){
+        try{
+            begin();
+            String hql = "FROM Project_User_Role where project.id =: id and role.name =: role and user.username =: username";
+            Query query = getSession().createQuery(hql)
+                    .setParameter("id", project.getId())
+                    .setParameter("role","developer")
+                    .setParameter("username", developer.getUsername());
+            Project_User_Role p = (Project_User_Role) query.uniqueResult();
+            if(p == null) {
+                System.out.println("Not found");
+                return -1;
+            }
+            User u = p.getUser();
+            List<Issue> assignedIssues = u.getAssignedIssues();
+            if(assignedIssues.size() > 0){
+                for(Issue issue : assignedIssues){
+                    if(issue.getStatus().getName().equals("open"))
+                        return -2;
+                }
+            }
+            p.getUser().removeLink(p);
+            p.getProject().removeLink(p);
+            getSession().delete(p);
+            commit();
+        }catch (Exception e){
             e.printStackTrace();
             rollback();
             return -1;

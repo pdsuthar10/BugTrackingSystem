@@ -20,7 +20,7 @@ public class ProjectDAO extends DAO {
         Query query = getSession().createQuery(hql);
         query.setComment("Getting all the projects....");
         List<Project> result = query.list();
-        close();
+//        close();
         return result;
     }
 

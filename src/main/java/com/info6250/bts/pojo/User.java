@@ -43,12 +43,26 @@ public class User implements Serializable{
     @Column(name = "modified_on")
     private Date modifiedOn;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Project_User_Role> projects = new ArrayList<Project_User_Role>();
+
+    @OneToMany(mappedBy = "assignedTo", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Issue> assignedIssues = new ArrayList<>();
 
     @Column(name = "is_admin")
     private boolean isAdmin;
 
+    public User() {
+    }
+
+    public List<Issue> getAssignedIssues() {
+        return assignedIssues;
+    }
+
+    public void removeLink(Project_User_Role p){
+        int index = this.getProjects().indexOf(p);
+        this.getProjects().remove(index);
+    }
 
     public int getUserId() {
         return userId;

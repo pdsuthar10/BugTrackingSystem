@@ -11,16 +11,20 @@
 <html>
 <head>
     <title>Welcome</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
 </head>
 <body>
+<div class="container">
 <h1>Welcome ${user.username}</h1>
 <ul>
     <li><a href="logout">Logout</a></li>
-    <c:if test="${user.isDeveloper()}"><li><a href="">Issues Assigned to you</a></li></c:if>
+    <c:if test="${user.isDeveloper()}"><li><a href="/bts/user/issuesAssigned">Issues Assigned to you</a></li></c:if>
 </ul>
 <c:if test="${projects.size()>0}">
+    <div class="shadow p-3 mb-5 bg-white rounded">
     <h3>Projects:</h3>
-    <table border="1px solid dark">
+    <table class="table table-striped table-hover">
         <thead>
         <tr>
             <td><b>Project-ID</b></td>
@@ -48,7 +52,7 @@
                 <td>
                     <c:if test="${sessionScope.user.admin}"><a href="/bts/admin/edit-project/${project.id}">Edit</a>&nbsp;|&nbsp;</c:if>
                     <c:if test="${sessionScope.user.admin}"><a href="/bts/admin/delete-project/${project.id}">Delete</a>&nbsp;|&nbsp;</c:if>
-                    <a href="/bts/admin/project/${project.id}/issues">Report an Issue</a>&nbsp;|&nbsp;
+                    <a href="/bts/project/${project.id}/issues/create-issue">Report an Issue</a>&nbsp;|&nbsp;
                     <c:if test="${sessionScope.user.admin || sessionScope.user.isManagerForProject(project)}">
                         <a href="/bts/project/${project.id}/add-developers">Add developers</a>&nbsp;|&nbsp;
                     </c:if>
@@ -57,26 +61,27 @@
             </tr>
         </c:forEach>
         </tbody>
-    </table>
+    </table></div>
 </c:if>
 <br/>
 <c:if test="${issues.size()>0}">
+    <div class="shadow p-3 mb-5 bg-white rounded">
     <h4>Issues/Tickets:</h4>
-    <table border="1px solid dark">
+    <table class="table table-striped table-hover">
         <thead>
         <tr>
-            <td>Issue-ID</td>
-            <td>Project-ID</td>
-            <td>Title</td>
-            <td>Description</td>
-            <td>Status</td>
-            <td>Type</td>
-            <td>Priority</td>
-            <td>Opened By</td>
-            <td>Assigned To</td>
-            <td>Created On</td>
-            <td>Modified On</td>
-            <td>Action</td>
+            <td><b>Issue-ID</b></td>
+            <td><b>Project-ID</b></td>
+            <td><b>Title</b></td>
+            <td><b>Description</b></td>
+            <td><b>Status</b></td>
+            <td><b>Type</b></td>
+            <td><b>Priority</b></td>
+            <td><b>Opened By</b></td>
+            <td><b>Assigned To</b></td>
+            <td><b>Created On</b></td>
+            <td><b>Modified On</b></td>
+            <td><b>Action</b></td>
         </tr>
         </thead>
         <tbody>
@@ -97,7 +102,7 @@
                     <a href="/bts/project/${issue.project.id}/issues/${issue.id}/details">View</a>
                     <c:if test="${sessionScope.user.admin || sessionScope.user.assignedIssue(issue)
                             || sessionScope.user.isManagerForProject(issue.project) }">
-                        &nbsp;|&nbsp;<a href="">Edit</a>
+                        &nbsp;|&nbsp;<a href="/bts/project/${issue.project.id}/issues/${issue.id}/edit-issue">Edit</a>
                     </c:if>
                     <c:if test="${sessionScope.user.admin || sessionScope.user.isManagerForProject(issue.project)}">
                         &nbsp;|&nbsp;<a href="">Delete</a>
@@ -106,7 +111,10 @@
             </tr>
         </c:forEach>
         </tbody>
-    </table>
+    </table></div>
 </c:if>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-ygbV9kiqUc6oa4msXn9868pTtWMgiQaeYH7/t7LECLbyPA2x65Kgf80OJFdroafW" crossorigin="anonymous"></script>
+<script type="text/javascript" src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
 </body>
 </html>

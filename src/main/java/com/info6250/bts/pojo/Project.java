@@ -68,10 +68,10 @@ public class Project implements Serializable{
 
 
     @Fetch(FetchMode.SELECT)
-    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     private List<Project_User_Role> assignedUsers = new ArrayList<Project_User_Role>();
 
-    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     private List<Issue> issues;
 
     public Project() {}
@@ -84,6 +84,11 @@ public class Project implements Serializable{
     public void removeUser(Project_User_Role oldLink){
         assignedUsers.remove(oldLink);
         oldLink.setProject(null);
+    }
+
+    public void removeLink(Project_User_Role p){
+        int index = this.getAssignedUsers().indexOf(p);
+        this.getAssignedUsers().remove(index);
     }
 
     public List<Issue> getIssues() {

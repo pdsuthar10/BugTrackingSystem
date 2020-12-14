@@ -5,6 +5,7 @@ import org.hibernate.HibernateException;
 import org.hibernate.query.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.Date;
 import java.util.List;
 
 @Repository
@@ -45,5 +46,45 @@ public class IssueDAO extends DAO{
         String hql = "FROM Issue";
         Query query = getSession().createQuery(hql);
         return query.list();
+    }
+
+    public List<Issue> findIssuesAssignedOfUser(String username){
+        String hql = "FROM Issue where assignedTo.username =: username";
+        Query query = getSession().createQuery(hql).setParameter("username", username);
+        return query.list();
+    }
+
+    public int resolveIssue(String resolutionSummary, Issue issue, User closedBy, Status status){
+        try{
+            issue.setStatus(status);
+            issue.setClosedBy(closedBy);
+            issue.setResolutionSummary(resolutionSummary);
+            issue.setClosedOn(new Date());
+            begin();
+            getSession().update(issue);
+            commit();
+        }catch (HibernateException e){
+            e.printStackTrace();
+            rollback();
+            return -1;
+        }finally {
+            close();
+        }
+        return 1;
+    }
+
+    public int updateIssue(Issue issue){
+        try{
+            begin();
+            getSession().update(issue);
+            commit();
+        }catch (HibernateException e){
+            e.printStackTrace();
+            rollback();
+            return -1;
+        }finally {
+            close();
+        }
+        return 1;
     }
 }

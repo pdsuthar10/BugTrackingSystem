@@ -4,6 +4,8 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import javax.persistence.*;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
@@ -60,7 +62,7 @@ public class Issue {
     private Date closedOn;
 
 
-    @OneToMany(mappedBy = "issue", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "issue", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<IssueComment> comments;
 
     public Issue() {
@@ -179,6 +181,13 @@ public class Issue {
     }
 
     public List<IssueComment> getComments() {
+        Comparator<IssueComment> compareById = new Comparator<IssueComment>() {
+            @Override
+            public int compare(IssueComment o1, IssueComment o2) {
+                return (int) (o2.getId() - (o1.getId()));
+            }
+        };
+        Collections.sort(comments, compareById);
         return comments;
     }
 

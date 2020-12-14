@@ -4,6 +4,9 @@ import com.info6250.bts.pojo.Priority;
 import org.hibernate.query.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Repository
 public class PriorityDAO extends DAO{
 
@@ -12,5 +15,15 @@ public class PriorityDAO extends DAO{
         Query query = getSession().createQuery(hql);
         query.setParameter("name", name);
         return (Priority) query.uniqueResult();
+    }
+
+    public List<String> findAllPriorities(){
+        String hql = "FROM Priority";
+        Query query = getSession().createQuery(hql);
+        List<String> result = new ArrayList<>();
+        List<Priority> all = query.list();
+        for(Priority p : all)
+            result.add(p.getName());
+        return result;
     }
 }
