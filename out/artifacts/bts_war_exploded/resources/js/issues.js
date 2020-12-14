@@ -85,3 +85,8 @@ function openModal(issueId) {
     xhttp.open("GET", '/bts/issues/'+issueId, true);
     xhttp.send();
 }
+
+function issuesFilterChange(){
+    let valueNow = $("#filter").val();
+    console.log(valueNow);
+}

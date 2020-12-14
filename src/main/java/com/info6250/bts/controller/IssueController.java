@@ -36,7 +36,7 @@ public class IssueController {
     public String createIssue(@PathVariable(name = "project_id") String project_id,
                               HttpSession session, ProjectDAO projectDao,
                               ProjectUserRoleDAO projectUserRoleDao, Model model){
-        try {
+        try{
             Integer.parseInt(project_id);
         }catch (Exception e){
             User user = (User) session.getAttribute("user");

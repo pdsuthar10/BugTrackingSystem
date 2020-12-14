@@ -19,7 +19,12 @@
 <h1>Welcome ${user.username}</h1>
 <ul>
     <li><a href="logout">Logout</a></li>
-    <c:if test="${user.isDeveloper()}"><li><a href="/bts/user/issuesAssigned">Issues Assigned to you</a></li></c:if>
+    <c:if test="${sessionScope.user.assignedIssues.size() > 0}">
+        <li><a href="/bts/user/issuesAssigned">Issues Assigned to you</a></li>
+    </c:if>
+    <c:if test="${sessionScope.user.openedIssues.size() > 0}">
+        <li><a href="/bts/user/issuesAssigned">Issues Opened by you</a></li>
+    </c:if>
 </ul>
 <c:if test="${projects.size()>0}">
     <div class="shadow p-3 mb-5 bg-white rounded">
@@ -53,9 +58,6 @@
                     <c:if test="${sessionScope.user.admin}"><a href="/bts/admin/edit-project/${project.id}">Edit</a>&nbsp;|&nbsp;</c:if>
                     <c:if test="${sessionScope.user.admin}"><a href="/bts/admin/delete-project/${project.id}">Delete</a>&nbsp;|&nbsp;</c:if>
                     <a href="/bts/project/${project.id}/issues/create-issue">Report an Issue</a>&nbsp;|&nbsp;
-                    <c:if test="${sessionScope.user.admin || sessionScope.user.isManagerForProject(project)}">
-                        <a href="/bts/project/${project.id}/add-developers">Add developers</a>&nbsp;|&nbsp;
-                    </c:if>
                     <a href="/bts/project/${project.id}/details">Details</a>
                 </td>
             </tr>

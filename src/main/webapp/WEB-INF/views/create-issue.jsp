@@ -14,7 +14,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
 </head>
 <body>
-<div class="container">
+<div class="container shadow p-3 mb-5 bg-white rounded">
 <h1>Create issue for Project - ${project.name}</h1>
 <ul>
     <li><a href="/bts/user/dashboard">Dashboard</a></li>
@@ -25,20 +25,25 @@
     </c:when>
     <c:otherwise>
         <form action="/bts/project/${project.id}/issues/submit-issue" method="post">
-            <label for="title">Issue Title: </label>
-            <input type="text" id="title" name="title" required><br/><br/>
+            <div class="mb-3">
+                <label for="title" class="form-label">Issue Title</label>
+                <input type="text" class="form-control" id="title" required>
+            </div>
             <c:if test='${error.get("title") != null}'>
                 <p><span style="color: red"><b>${error.get("title")}</b></span></p>
             </c:if>
 
-            <label for="description">Description: </label>
-            <textarea id="description" name="description" rows="5" cols="60" required></textarea><br/><br/>
+            <div class="mb-3">
+                <label for="description" class="form-label">Description</label>
+                <textarea id="description" name="description" rows="5" cols="60" required class="form-control"></textarea>
+            </div>
             <c:if test='${error.get("description") != null}'>
                 <p><span style="color: red"><b>${error.get("description")}</b></span></p>
             </c:if>
+            <br/>
 
-            <label for="priority">Priority: </label>
-            <select name="priority" id="priority">
+            <label for="priority" class="form-label">Priority: </label>
+            <select class="form-select" name="priority" id="priority">
                 <option value="Severe">Severe</option>
                 <option value="High">High</option>
                 <option value="General">General</option>
@@ -47,9 +52,10 @@
             <c:if test='${error.get("priority") != null}'>
                 <p><span style="color: red"><b>${error.get("priority")}</b></span></p>
             </c:if>
+            <br/>
 
-            <label for="issueType">Issue Type: </label>
-            <select name="issueType" id="issueType">
+            <label for="issueType" class="form-label">Issue Type: </label>
+            <select class="form-select" name="issueType" id="issueType">
                 <option value="Bug">Bug</option>
                 <option value="Error">Error</option>
                 <option value="Task">Task</option>
@@ -57,9 +63,10 @@
             <c:if test='${error.get("issueType") != null}'>
                 <p><span style="color: red"><b>${error.get("issueType")}</b></span></p>
             </c:if>
+            <br/>
 
-            <label for="assignTo">Assign To:</label>
-            <select name="assignTo" id="assignTo">
+            <label for="assignTo" class="form-label">Assign To:</label>
+            <select class="form-select" name="assignTo" id="assignTo">
                 <c:forEach var="developer" items="${developers}">
                     <option value="${developer.username}">${developer.name} (${developer.username})</option>
                 </c:forEach>
@@ -67,8 +74,9 @@
             <c:if test='${error.get("assignTo") != null}'>
                 <p><span style="color: red"><b>${error.get("assignTo")}</b></span></p>
             </c:if>
+            <br/>
 
-            <input type="submit" value="Create">
+            <button type="submit" class="btn btn-primary">Create</button>
         </form>
     </c:otherwise>
 </c:choose>

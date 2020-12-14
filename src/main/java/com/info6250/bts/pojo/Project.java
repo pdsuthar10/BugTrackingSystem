@@ -81,14 +81,14 @@ public class Project implements Serializable{
         newLink.setProject(this);
     }
 
-    public void removeUser(Project_User_Role oldLink){
-        assignedUsers.remove(oldLink);
-        oldLink.setProject(null);
-    }
-
     public void removeLink(Project_User_Role p){
         int index = this.getAssignedUsers().indexOf(p);
         this.getAssignedUsers().remove(index);
+    }
+
+    public void removeIssue(Issue issue){
+        int index = this.getIssues().indexOf(issue);
+        this.getIssues().remove(index);
     }
 
     public List<Issue> getIssues() {

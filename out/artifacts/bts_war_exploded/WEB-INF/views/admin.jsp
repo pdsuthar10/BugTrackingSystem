@@ -55,9 +55,6 @@
                         <c:if test="${sessionScope.user.admin}"><a href="/bts/admin/edit-project/${project.id}">Edit</a>&nbsp;|&nbsp;</c:if>
                         <c:if test="${sessionScope.user.admin}"><a href="/bts/admin/delete-project/${project.id}">Delete</a>&nbsp;|&nbsp;</c:if>
                         <a href="/bts/project/${project.id}/issues/create-issue">Report an Issue</a>&nbsp;|&nbsp;
-                        <c:if test="${sessionScope.user.admin || sessionScope.user.isManagerForProject(project)}">
-                            <a href="/bts/project/${project.id}/add-developers">Add developers</a>&nbsp;|&nbsp;
-                        </c:if>
                         <a href="/bts/project/${project.id}/details">Details</a>
                     </td>
                 </tr>

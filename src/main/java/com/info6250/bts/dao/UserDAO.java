@@ -27,6 +27,12 @@ public class UserDAO extends DAO{
         return null;
     }
 
+    public User findById(int id){
+        String hql = "FROM User where userId =: id";
+        Query query = getSession().createQuery(hql).setParameter("id",id);
+        return (User) query.uniqueResult();
+    }
+
     public int addUser(String name, String username, String password, PasswordEncoder passwordEncoder){
         User userToAdd = new User();
         userToAdd.setUsername(username);

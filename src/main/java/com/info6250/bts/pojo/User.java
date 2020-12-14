@@ -49,6 +49,9 @@ public class User implements Serializable{
     @OneToMany(mappedBy = "assignedTo", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Issue> assignedIssues = new ArrayList<>();
 
+    @OneToMany(mappedBy = "openedBy", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Issue> openedIssues = new ArrayList<>();
+
     @Column(name = "is_admin")
     private boolean isAdmin;
 
@@ -59,9 +62,30 @@ public class User implements Serializable{
         return assignedIssues;
     }
 
+    public List<Issue> getOpenedIssues() {
+        return openedIssues;
+    }
+
+    public List<Issue> getAllIssues(){
+        List<Issue> issues = new ArrayList<>();
+        for(Issue issue : this.getAssignedIssues())
+            issues.add(issue);
+        for(Issue issue : this.getOpenedIssues())
+            issues.add(issue);
+        return issues;
+    }
     public void removeLink(Project_User_Role p){
         int index = this.getProjects().indexOf(p);
         this.getProjects().remove(index);
+    }
+
+    public void removeAssignedIssue(Issue issue){
+        int index = this.getAssignedIssues().indexOf(issue);
+        this.getAssignedIssues().remove(index);
+    }
+
+    public void removeOpenedIssue(Issue issue){
+        this.getOpenedIssues().remove(this.getOpenedIssues().indexOf(issue));
     }
 
     public int getUserId() {

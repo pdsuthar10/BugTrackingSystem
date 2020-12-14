@@ -72,6 +72,11 @@ function addTableComment(comment){
 
 }
 
+function issuesFilterChange(){
+    let valueNow = $("#filter").val();
+    console.log(valueNow);
+}
+
 function openModal(issueId) {
     let myModal = document.getElementById("editIssueModal");
     let modal = new bootstrap.Modal(myModal);
