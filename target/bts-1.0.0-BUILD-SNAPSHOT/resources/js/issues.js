@@ -72,20 +72,6 @@ function addTableComment(comment){
 
 }
 
-function openModal(issueId) {
-    let myModal = document.getElementById("editIssueModal");
-    let modal = new bootstrap.Modal(myModal);
-    let xhttp = new XMLHttpRequest();
-    xhttp.onreadystatechange = function() {
-        if (this.readyState == 4 && this.status == 200) {
-            console.log(JSON.parse(this.response).map)
-            modal.show()
-        }
-    };
-    xhttp.open("GET", '/bts/issues/'+issueId, true);
-    xhttp.send();
-}
-
 function issuesFilterChange(){
     let valueNow = $("#filter").val();
     console.log(valueNow);
