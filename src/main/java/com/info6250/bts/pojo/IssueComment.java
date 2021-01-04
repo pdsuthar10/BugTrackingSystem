@@ -17,7 +17,7 @@ public class IssueComment{
     @JoinColumn(name = "user_id")
     private User commentedBy;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "issue_id")
     private Issue issue;
 

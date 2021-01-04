@@ -2,9 +2,11 @@ package com.info6250.bts.controller;
 
 import com.info6250.bts.dao.IssueCommentDAO;
 import com.info6250.bts.dao.IssueDAO;
+import com.info6250.bts.dao.ProjectDAO;
 import com.info6250.bts.dao.UserDAO;
 import com.info6250.bts.pojo.Issue;
 import com.info6250.bts.pojo.IssueComment;
+import com.info6250.bts.pojo.Project;
 import com.info6250.bts.pojo.User;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -13,8 +15,8 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
-import java.util.ArrayList;
-import java.util.List;
+import javax.validation.constraints.NotNull;
+import java.util.*;
 
 @RestController
 public class RestfulControllers {
@@ -60,26 +62,93 @@ public class RestfulControllers {
         return com;
     }
 
-    @GetMapping("/user/{user_id}/issues")
-    public JSONArray getMyIssues(@PathVariable(name = "user_id") String user_id,
-                                 UserDAO userDAO, HttpServletRequest request){
+    @PostMapping(value = "/api/user/{username}/issues", produces = MediaType.APPLICATION_JSON_VALUE)
+    public JSONArray getIssues(@PathVariable(name = "username") String username,
+                                 UserDAO userDAO, @RequestBody @NotNull String filter,
+                                 IssueDAO issueDAO){
+
+        System.out.println("type: "+filter);
+        User user = userDAO.findUserByUsername(username);
+        if(user == null || filter == null || filter.trim().equals("")) return null;
+
+        List<Issue> issues;
+        if(filter.equals("assigned"))
+            issues = user.getAssignedIssues();
+        else if(filter.equals("opened"))
+            issues = user.getOpenedIssues();
+        else if(filter.equals("all")) {
+            Set<Issue> temp = user.getAllIssues();
+            issues = new ArrayList<>(temp);
+        }else if (filter.equals("open") || filter.equals("closed")) {
+            List<Issue> temp = issueDAO.findAllIssues();
+            issues = new ArrayList<>();
+            for (Issue issue : temp) {
+                if (issue.getStatus().getName().equals(filter))
+                    issues.add(issue);
+            }
+        }else if(filter.equals("allIssues")){
+            issues = issueDAO.findAllIssues();
+        }
+        else
+            return null;
+
+        System.out.println(issues.size());
+
+        JSONArray result = new JSONArray();
+        for(Issue issue : issues){
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("issueId",issue.getId());
+            jsonObject.put("projectId", issue.getProject().getId());
+            jsonObject.put("title", issue.getTitle());
+            jsonObject.put("description", issue.getDescription());
+            jsonObject.put("status", issue.getStatus().getName());
+            jsonObject.put("issueType", issue.getIssueType());
+            jsonObject.put("priority", issue.getPriority().getName());
+            jsonObject.put("openedBy", issue.getOpenedBy().getName()+" ("+issue.getOpenedBy().getUsername()+")");
+            jsonObject.put("assignedTo", issue.getAssignedTo().getName()+" ("+issue.getAssignedTo().getUsername()+")");
+            jsonObject.put("createdOn", issue.getCreatedOn().toLocaleString());
+            jsonObject.put("modifiedOn", issue.getModifiedOn().toLocaleString());
+            jsonObject.put("viewLink","/bts/project/"+issue.getProject().getId()+"/issues/"+issue.getId()+"/details");
+            if(user.isAdmin() || user.assignedIssue(issue) || user.isManagerForProject(issue.getProject()))
+                jsonObject.put("editLink","/bts/project/"+issue.getProject().getId()+"/issues/"+issue.getId()+"/edit-issue");
+            if(user.isAdmin() || user.isManagerForProject(issue.getProject()))
+                jsonObject.put("deleteLink","/bts/project/"+issue.getProject().getId()+"/issues/"+issue.getId()+"/delete-issue");
+            result.put(jsonObject);
+        }
+        System.out.println(result);
+        return result;
+    }
+
+
+    @PostMapping(value = "/api/user/{user_id}/project/{project_id}/issues", produces = MediaType.APPLICATION_JSON_VALUE)
+    public JSONArray getIssues(@PathVariable(name = "project_id") String project_id,
+                               @PathVariable(name = "user_id") String user_id, UserDAO userDAO,
+                               ProjectDAO projectDAO, @RequestBody @NotNull String filter,
+                               IssueDAO issueDAO){
+
         int id;
+        UUID userId;
         try {
-            id=Integer.parseInt(user_id);
+            id = Integer.parseInt(project_id);
+            userId = UUID.fromString(user_id);
         }catch (Exception e){
             return null;
         }
-        String type = request.getParameter("type");
-        User user = userDAO.findById(id);
-        if(user == null || type == null || type.trim().equals("")) return null;
+        Project project = projectDAO.findProjectById(id);
+        User user = userDAO.findById(userId);
+        if(project == null || user == null || filter == null || filter.trim().equals("")) return null;
 
         List<Issue> issues;
-        if(type.equals("assigned"))
-            issues = user.getAssignedIssues();
-        else if(type.equals("opened"))
-            issues = user.getOpenedIssues();
-        else if(type.equals("all"))
-            issues = user.getAllIssues();
+        if(filter.equals("all")) {
+            issues = project.getIssues();
+        }else if (filter.equals("open") || filter.equals("closed")) {
+            List<Issue> temp = project.getIssues();
+            issues = new ArrayList<>();
+            for (Issue issue : temp) {
+                if (issue.getStatus().getName().equals(filter))
+                    issues.add(issue);
+            }
+        }
         else
             return null;
 
@@ -98,10 +167,71 @@ public class RestfulControllers {
             jsonObject.put("createdOn", issue.getCreatedOn().toLocaleString());
             jsonObject.put("modifiedOn", issue.getModifiedOn().toLocaleString());
             jsonObject.put("viewLink","/bts/project/"+issue.getProject().getId()+"/issues/"+issue.getId()+"/details");
-            jsonObject.put("editLink","/bts/project/"+issue.getProject().getId()+"/issues/"+issue.getId()+"/edit-issue");
-            jsonObject.put("deleteLink","/bts/project/"+issue.getProject().getId()+"/issues/"+issue.getId()+"/delete-issue");
+            if(user.isAdmin() || user.assignedIssue(issue) || user.isManagerForProject(issue.getProject()))
+                jsonObject.put("editLink","/bts/project/"+issue.getProject().getId()+"/issues/"+issue.getId()+"/edit-issue");
+            if(user.isAdmin() || user.isManagerForProject(issue.getProject()))
+                jsonObject.put("deleteLink","/bts/project/"+issue.getProject().getId()+"/issues/"+issue.getId()+"/delete-issue");
             result.put(jsonObject);
         }
+        System.out.println(result);
         return result;
     }
+
+    @PostMapping(value = "/api/user/issues", produces = MediaType.APPLICATION_JSON_VALUE)
+    public JSONArray getSearchIssues(@RequestBody String filter,
+                               IssueDAO issueDAO, HttpSession session){
+
+        User user = (User) session.getAttribute("user");
+        List<Issue> issues = new ArrayList<>();
+        if(filter.equals("all")){
+            issues = issueDAO.findAllIssues();
+        }else if(!(filter == null || filter.trim().equals(""))) {
+            filter = filter.toLowerCase();
+            for(Issue issue: issueDAO.findAllIssues()){
+                if(String.valueOf(issue.getId()).equals(filter)
+                    || String.valueOf(issue.getProject().getId()).equals(filter)
+                    || issue.getTitle().toLowerCase().contains(filter)
+                    || issue.getDescription().toLowerCase().contains(filter)
+                    || issue.getStatus().getName().toLowerCase().contains(filter)
+                    || issue.getIssueType().toLowerCase().contains(filter)
+                    || issue.getPriority().getName().toLowerCase().contains(filter)
+                    || issue.getOpenedBy().getName().toLowerCase().contains(filter)
+                    || issue.getOpenedBy().getUsername().toLowerCase().contains(filter)
+                    || issue.getAssignedTo().getName().toLowerCase().contains(filter)
+                    || issue.getAssignedTo().getUsername().toLowerCase().contains(filter)){
+                    issues.add(issue);
+                }
+            }
+        }else
+            issues = issueDAO.findAllIssues();
+
+
+
+        JSONArray result = new JSONArray();
+        for(Issue issue : issues){
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("issueId",issue.getId());
+            jsonObject.put("projectId", issue.getProject().getId());
+            jsonObject.put("title", issue.getTitle());
+            jsonObject.put("description", issue.getDescription());
+            jsonObject.put("status", issue.getStatus().getName());
+            jsonObject.put("issueType", issue.getIssueType());
+            jsonObject.put("priority", issue.getPriority().getName());
+            jsonObject.put("openedBy", issue.getOpenedBy().getName()+" ("+issue.getOpenedBy().getUsername()+")");
+            jsonObject.put("assignedTo", issue.getAssignedTo().getName()+" ("+issue.getAssignedTo().getUsername()+")");
+            jsonObject.put("createdOn", issue.getCreatedOn().toLocaleString());
+            jsonObject.put("modifiedOn", issue.getModifiedOn().toLocaleString());
+            jsonObject.put("viewLink","/bts/project/"+issue.getProject().getId()+"/issues/"+issue.getId()+"/details");
+            if(user.isAdmin() || user.assignedIssue(issue) || user.isManagerForProject(issue.getProject()))
+                jsonObject.put("editLink","/bts/project/"+issue.getProject().getId()+"/issues/"+issue.getId()+"/edit-issue");
+            if(user.isAdmin() || user.isManagerForProject(issue.getProject()))
+                jsonObject.put("deleteLink","/bts/project/"+issue.getProject().getId()+"/issues/"+issue.getId()+"/delete-issue");
+            result.put(jsonObject);
+        }
+//        System.out.println(result);
+        return result;
+    }
+
+
+
 }

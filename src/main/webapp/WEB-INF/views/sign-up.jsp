@@ -1,3 +1,4 @@
+<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 <%--
   Created by IntelliJ IDEA.
   User: priyamsuthar
@@ -14,14 +15,34 @@
 </head>
 <body>
 <div class="container">
-<h1>Registration Page!</h1>
-<form method="post" action="register">
-    <label for="name">Name: </label><input id="name" type="text" name="name">
-    <label for="username">Username: </label><input id="username" type="text" name="username"><br/>
-    <label for="password">Password: </label><input id="password" type="password" name="password"><br/>
-    <label for="confirmPassword">Confirm Password: </label><input id="confirmPassword" type="password" name="confirmPassword"><br/>
-    <input type="submit" value="Sign up">
-</form>
+    <div class="container shadow-lg p-3 mb-5 bg-white rounded" style="margin-top: 40px">
+        <h1 style="text-align: center">Registration</h1>
+        <form:form modelAttribute="user" method="post" action="register">
+            <div class="mb-3">
+                <label for="name" class="form-label">Name: </label>
+                <form:input path="name" id="name" name="name" class="form-control"/>
+                <span style="color: red; font-style: italic"><b><form:errors path="name" cssClass="error"/></b></span>
+            </div>
+            <div class="mb-3">
+                <label for="username" class="form-label">Username: </label>
+                <form:input path="username" id="username" name="username" class="form-control"/>
+                <span style="color: red; font-style: italic"><b><form:errors path="username" cssClass="error"/></b></span>
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Password: </label>
+                <form:password path="password" id="password" name="password" class="form-control"/>
+                <span style="color: red; font-style: italic"><b><form:errors path="password" cssClass="error"/></b></span>
+            </div>
+            <div class="mb-3">
+                <label for="confirmPassword" class="form-label">Confirm Password: </label>
+                <input id="confirmPassword" type="password" name="confirmPassword" class="form-control">
+                <span style="color: red; font-style: italic"><b>${error}</b></span>
+            </div>
+
+            <button type="submit" class="btn btn-success">Sign Up</button>
+        </form:form>
+        <a href="/bts/"><button class="btn btn-primary">Login</button></a>
+    </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-ygbV9kiqUc6oa4msXn9868pTtWMgiQaeYH7/t7LECLbyPA2x65Kgf80OJFdroafW" crossorigin="anonymous"></script>
 <script type="text/javascript" src="http://code.jquery.com/jquery-1.7.1.min.js"></script>

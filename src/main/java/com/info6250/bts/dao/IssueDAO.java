@@ -87,4 +87,29 @@ public class IssueDAO extends DAO{
         }
         return 1;
     }
+    
+    public int deleteIssue(Issue issue, IssueCommentDAO issueCommentDAO) {
+    	try {
+            begin();
+            issue.getAssignedTo().removeAssignedIssue(issue);
+            System.out.println("1");
+        	issue.getOpenedBy().removeOpenedIssue(issue);
+        	issue.getProject().removeIssue(issue);
+            System.out.println(issue.getId());
+
+            getSession().delete(issue);
+            System.out.println("2");
+        	commit();
+            System.out.println("3");
+			
+		} catch (Exception e) {
+			// TODO: handle exception
+            System.out.println(e.getMessage());
+			rollback();
+			return -1;
+		}finally {
+			close();
+		}       	
+    	return 1;
+	}
 }

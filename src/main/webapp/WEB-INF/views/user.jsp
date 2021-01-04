@@ -1,5 +1,5 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %><%@ taglib prefix="security" uri="http://www.springframework.org/security/tags"%>
 <%--
   Created by IntelliJ IDEA.
   User: priyamsuthar
@@ -15,105 +15,116 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
 </head>
 <body>
-<div class="container">
+<jsp:include page="navbar.jsp"/>
+<div class="container-fluid">
 <h1>Welcome ${user.username}</h1>
-<ul>
-    <li><a href="logout">Logout</a></li>
-    <c:if test="${sessionScope.user.assignedIssues.size() > 0}">
-        <li><a href="/bts/user/issuesAssigned">Issues Assigned to you</a></li>
-    </c:if>
-    <c:if test="${sessionScope.user.openedIssues.size() > 0}">
-        <li><a href="/bts/user/issuesAssigned">Issues Opened by you</a></li>
-    </c:if>
-</ul>
+    <security:authorize access="hasRole('admin')">Is a amanager</security:authorize>
 <c:if test="${projects.size()>0}">
     <div class="shadow p-3 mb-5 bg-white rounded">
     <h3>Projects:</h3>
-    <table class="table table-striped table-hover">
-        <thead>
-        <tr>
-            <td><b>Project-ID</b></td>
-            <td><b>Project Name</b></td>
-            <td><b>Project Manager</b></td>
-            <td><b>Manager Username</b></td>
-            <td><b>Start Date</b></td>
-            <td><b>Target End Date</b></td>
-            <td><b>Created On</b></td>
-            <td><b>Modified On</b></td>
-            <td><b>Action</b></td>
-        </tr>
-        </thead>
-        <tbody>
-        <c:forEach var="project" items="${projects}">
-            <tr>
-                <td>${project.id}</td>
-                <td>${project.name}</td>
-                <td>${project.manager.name}</td>
-                <td>${project.manager.username}</td>
-                <td><fmt:formatDate value="${project.startDate}" pattern="MM-dd-yyyy"/></td>
-                <td><fmt:formatDate value="${project.targetEndDate}" pattern="MM-dd-yyyy"/></td>
-                <td>${project.createdOn.toLocaleString()}</td>
-                <td>${project.modifiedOn.toLocaleString()}</td>
-                <td>
-                    <c:if test="${sessionScope.user.admin}"><a href="/bts/admin/edit-project/${project.id}">Edit</a>&nbsp;|&nbsp;</c:if>
-                    <c:if test="${sessionScope.user.admin}"><a href="/bts/admin/delete-project/${project.id}">Delete</a>&nbsp;|&nbsp;</c:if>
-                    <a href="/bts/project/${project.id}/issues/create-issue">Report an Issue</a>&nbsp;|&nbsp;
-                    <a href="/bts/project/${project.id}/details">Details</a>
-                </td>
-            </tr>
-        </c:forEach>
-        </tbody>
-    </table></div>
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                <tr>
+                    <td><b>Project-ID</b></td>
+                    <td><b>Project Name</b></td>
+                    <td><b>Project Manager</b></td>
+                    <td><b>Manager Username</b></td>
+                    <td><b>Start Date</b></td>
+                    <td><b>Target End Date</b></td>
+                    <td><b>Created On</b></td>
+                    <td><b>Modified On</b></td>
+                    <td><b>Action</b></td>
+                </tr>
+                </thead>
+                <tbody>
+                <c:forEach var="project" items="${projects}">
+                    <tr>
+                        <td>${project.id}</td>
+                        <td>${project.name}</td>
+                        <td>${project.manager.name}</td>
+                        <td>${project.manager.username}</td>
+                        <td><fmt:formatDate value="${project.startDate}" pattern="MM-dd-yyyy"/></td>
+                        <td><fmt:formatDate value="${project.targetEndDate}" pattern="MM-dd-yyyy"/></td>
+                        <td>${project.createdOn.toLocaleString()}</td>
+                        <td>${project.modifiedOn.toLocaleString()}</td>
+                        <td>
+                            <c:if test="${sessionScope.user.admin}"><a href="/bts/admin/edit-project/${project.id}">Edit</a>&nbsp;|&nbsp;</c:if>
+                            <c:if test="${sessionScope.user.admin}"><a href="/bts/admin/delete-project/${project.id}">Delete</a>&nbsp;|&nbsp;</c:if>
+                            <a href="/bts/project/${project.id}/issues/create-issue">Report an Issue</a>&nbsp;|&nbsp;
+                            <a href="/bts/project/${project.id}/details">Details</a>
+                        </td>
+                    </tr>
+                </c:forEach>
+                </tbody>
+            </table>
+        </div>
+    </div>
 </c:if>
 <br/>
 <c:if test="${issues.size()>0}">
     <div class="shadow p-3 mb-5 bg-white rounded">
-    <h4>Issues/Tickets:</h4>
-    <table class="table table-striped table-hover">
-        <thead>
-        <tr>
-            <td><b>Issue-ID</b></td>
-            <td><b>Project-ID</b></td>
-            <td><b>Title</b></td>
-            <td><b>Description</b></td>
-            <td><b>Status</b></td>
-            <td><b>Type</b></td>
-            <td><b>Priority</b></td>
-            <td><b>Opened By</b></td>
-            <td><b>Assigned To</b></td>
-            <td><b>Created On</b></td>
-            <td><b>Modified On</b></td>
-            <td><b>Action</b></td>
-        </tr>
-        </thead>
-        <tbody>
-        <c:forEach var="issue" items="${issues}">
-            <tr>
-                <td>${issue.id}</td>
-                <td>${issue.project.id}</td>
-                <td>${issue.title}</td>
-                <td>${issue.description}</td>
-                <td>${issue.status.name}</td>
-                <td>${issue.issueType}</td>
-                <td>${issue.priority.name}</td>
-                <td>${issue.openedBy.name} (${issue.openedBy.username})</td>
-                <td>${issue.assignedTo.name} (${issue.assignedTo.username})</td>
-                <td>${issue.createdOn}</td>
-                <td>${issue.modifiedOn.toLocaleString()}</td>
-                <td>
-                    <a href="/bts/project/${issue.project.id}/issues/${issue.id}/details">View</a>
-                    <c:if test="${sessionScope.user.admin || sessionScope.user.assignedIssue(issue)
+        <div class="row">
+            <div class="col">
+                <h4>Issues/Tickets:</h4>
+            </div>
+            <div class="col" style="text-align: right">
+                <input name="searchIssue" type="text" id="searchIssue" oninput="searchChange()">
+                <select name="filter" id="filter" onchange='issuesFilterChange("${sessionScope.user.username}")'>
+                        <option value="allIssues">All</option>
+                        <option value="open">Open</option>
+                        <option value="closed">Closed</option>
+                </select>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-striped table-hover table-sm">
+                <thead>
+                <tr>
+                    <td><b>Issue-ID</b></td>
+                    <td><b>Project-ID</b></td>
+                    <td><b>Title</b></td>
+                    <td><b>Description</b></td>
+                    <td><b>Status</b></td>
+                    <td><b>Type</b></td>
+                    <td><b>Priority</b></td>
+                    <td><b>Opened By</b></td>
+                    <td><b>Assigned To</b></td>
+                    <td><b>Created On</b></td>
+                    <td><b>Modified On</b></td>
+                    <td><b>Action</b></td>
+                </tr>
+                </thead>
+                <tbody id="issueList">
+                <c:forEach var="issue" items="${issues}">
+                    <tr>
+                        <td>${issue.id}</td>
+                        <td>${issue.project.id}</td>
+                        <td>${issue.title}</td>
+                        <td>${issue.description}</td>
+                        <td>${issue.status.name}</td>
+                        <td>${issue.issueType}</td>
+                        <td>${issue.priority.name}</td>
+                        <td>${issue.openedBy.name} (${issue.openedBy.username})</td>
+                        <td>${issue.assignedTo.name} (${issue.assignedTo.username})</td>
+                        <td>${issue.createdOn}</td>
+                        <td>${issue.modifiedOn.toLocaleString()}</td>
+                        <td>
+                            <a href="/bts/project/${issue.project.id}/issues/${issue.id}/details">View</a>
+                            <c:if test="${sessionScope.user.admin || sessionScope.user.assignedIssue(issue)
                             || sessionScope.user.isManagerForProject(issue.project) }">
-                        &nbsp;|&nbsp;<a href="/bts/project/${issue.project.id}/issues/${issue.id}/edit-issue">Edit</a>
-                    </c:if>
-                    <c:if test="${sessionScope.user.admin || sessionScope.user.isManagerForProject(issue.project)}">
-                        &nbsp;|&nbsp;<a href="">Delete</a>
-                    </c:if>
-                </td>
-            </tr>
-        </c:forEach>
-        </tbody>
-    </table></div>
+                                &nbsp;|&nbsp;<a href="/bts/project/${issue.project.id}/issues/${issue.id}/edit-issue">Edit</a>
+                            </c:if>
+                            <c:if test="${sessionScope.user.admin || sessionScope.user.isManagerForProject(issue.project)}">
+                                &nbsp;|&nbsp;<a href="/bts/project/${issue.project.id}/issues/${issue.id}/delete-issue">Delete</a>
+                            </c:if>
+                        </td>
+                    </tr>
+                </c:forEach>
+                </tbody>
+            </table></div>
+        </div>
+
 </c:if>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-ygbV9kiqUc6oa4msXn9868pTtWMgiQaeYH7/t7LECLbyPA2x65Kgf80OJFdroafW" crossorigin="anonymous"></script>

@@ -1,12 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="btsdb@localhost" uuid="fdf22116-ecd9-416a-b29b-b8bb540f539e">
-      <driver-ref>mysql.8</driver-ref>
-      <synchronize>true</synchronize>
-      <jdbc-driver>com.mysql.cj.jdbc.Driver</jdbc-driver>
-      <jdbc-url>jdbc:mysql://localhost:3306/btsdb</jdbc-url>
-    </data-source>
     <data-source source="LOCAL" name="hibernate.cfg.xml/Hibernate" uuid="e379f667-14b8-4cfe-b4c0-15663d0836dc">
       <driver-ref>mysql.8</driver-ref>
       <synchronize>true</synchronize>
@@ -17,11 +11,12 @@
       <jdbc-driver>com.mysql.cj.jdbc.Driver</jdbc-driver>
       <jdbc-url>jdbc:mysql://localhost:3306/btsdb</jdbc-url>
     </data-source>
-    <data-source source="LOCAL" name="@localhost" uuid="29ed1b26-0a42-481c-8eb0-e75e44fe3f23">
+    <data-source source="LOCAL" name="projectdb@localhost" uuid="38228f7a-08bb-4160-97f4-f61682882fed">
       <driver-ref>mysql.8</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>com.mysql.cj.jdbc.Driver</jdbc-driver>
-      <jdbc-url>jdbc:mysql://localhost:3306</jdbc-url>
+      <jdbc-url>jdbc:mysql://localhost:3306/projectdb</jdbc-url>
+      <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
   </component>
 </project>

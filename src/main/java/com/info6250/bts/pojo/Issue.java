@@ -4,6 +4,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -17,7 +18,10 @@ public class Issue {
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "issue_id")
     private long id;
+
+    @NotNull(message = "Cannot be null")
     private String title;
+    @NotNull
     private String description;
 
     @ManyToOne
@@ -62,10 +66,15 @@ public class Issue {
     private Date closedOn;
 
 
-    @OneToMany(mappedBy = "issue", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "issue", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<IssueComment> comments;
 
     public Issue() {
+    }
+
+    public void removeComment(IssueComment comment){
+        this.getComments().remove(this.getComments().indexOf(comment));
+        comment.setIssue(null);
     }
 
     public User getAssignedTo() {

@@ -82,4 +82,19 @@ public class ProjectDAO extends DAO {
         }
         return 1;
     }
+
+    public int deleteProject(Project project){
+        try {
+            begin();
+            getSession().delete(project);
+            commit();
+        }catch (Exception e){
+            e.printStackTrace();
+            rollback();
+            return -1;
+        }finally {
+            close();
+        }
+        return 1;
+    }
 }

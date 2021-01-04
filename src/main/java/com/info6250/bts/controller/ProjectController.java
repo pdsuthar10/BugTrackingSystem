@@ -5,7 +5,6 @@ import com.info6250.bts.dao.ProjectUserRoleDAO;
 import com.info6250.bts.dao.RoleDAO;
 import com.info6250.bts.dao.UserDAO;
 import com.info6250.bts.pojo.Project;
-import com.info6250.bts.pojo.Project_User_Role;
 import com.info6250.bts.pojo.User;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -15,42 +14,18 @@ import org.springframework.web.bind.annotation.PostMapping;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
-import java.util.ArrayList;
 import java.util.List;
 
 @Controller
 public class ProjectController {
 
-
-    @GetMapping("/project/{project_id}/add-developers")
-    public String addDevelopers(@PathVariable(name = "project_id") String project_id,
-                                HttpSession session, ProjectDAO projectDAO,
-                                ProjectUserRoleDAO projectUserRoleDAO, UserDAO userDAO, Model model){
-        int id;
-        try {
-            id = Integer.parseInt(project_id);
-        }catch (Exception e){
-            return "redirect:/user/dashboard";
-        }
-        Project project = projectDAO.findProjectById(id);
-        projectDAO.getSession().refresh(project);
-        if(project == null) return "redirect:/user/dashboard";
-
+    @GetMapping("/user/projects")
+    public String getMyProjects(Model model, HttpSession session){
         User user = (User) session.getAttribute("user");
-        User manager = project.getManager();
-        if(user.isAdmin() || user.getUsername().equals(manager.getUsername())){
-            List<User> unassignedDevelopers = userDAO.findUnassignedUsersProject(project);
-            List<User> developers = project.getDevelopers();
-            model.addAttribute("unassignedDevelopers", unassignedDevelopers);
-            model.addAttribute("project", project);
-            model.addAttribute("manager", manager);
-            model.addAttribute("developers", developers);
-            return "add-developers";
-        }else{
-            return "redirect:/user/dashboard";
-        }
-
+        model.addAttribute("projects", user.getProjectsManagedByMe());
+        return "projects";
     }
+
 
     @PostMapping("/project/{project_id}/add-developers")
     public String addingDevelopers(@PathVariable(name = "project_id") String project_id, HttpServletRequest request,

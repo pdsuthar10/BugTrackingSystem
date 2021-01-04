@@ -2,31 +2,36 @@ package com.info6250.bts.controller;
 
 import com.info6250.bts.dao.*;
 import com.info6250.bts.pojo.*;
+import com.info6250.bts.validator.IssueValidator;
 import org.apache.commons.mail.DefaultAuthenticator;
 import org.apache.commons.mail.Email;
 import org.apache.commons.mail.EmailException;
 import org.apache.commons.mail.HtmlEmail;
-import org.json.JSONObject;
-import org.springframework.http.MediaType;
+
+import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.support.SessionStatus;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
-import java.nio.file.Path;
+import javax.validation.Valid;
+
 import java.util.*;
 
 @Controller
 public class IssueController {
 
-    @GetMapping("/user/issuesAssigned")
+    @Autowired
+    IssueValidator issueValidator;
+
+    @GetMapping("/user/issues")
     public String issuesAssigned(IssueDAO issueDAO, Model model, HttpSession session){
         User user = (User) session.getAttribute("user");
         List<Issue> issues = issueDAO.findIssuesAssignedOfUser(user.getUsername());
-        for(Issue i : issues){
-            System.out.println(i.getId()+", "+i.getAssignedTo().getUsername());
-        }
         model.addAttribute("issues", issues);
 
         return "issues-assigned";
@@ -34,62 +39,91 @@ public class IssueController {
 
     @GetMapping("/project/{project_id}/issues/create-issue")
     public String createIssue(@PathVariable(name = "project_id") String project_id,
-                              HttpSession session, ProjectDAO projectDao,
-                              ProjectUserRoleDAO projectUserRoleDao, Model model){
-        try{
-            Integer.parseInt(project_id);
-        }catch (Exception e){
-            User user = (User) session.getAttribute("user");
-            if(user.isAdmin())
-                return "redirect:/admin";
-            else
-                return "redirect:/user";
-        }
+                              HttpSession session, ProjectDAO projectDao, UserDAO userDAO,
+                              Model model){
+
         Project project = projectDao.findProjectById(Integer.parseInt(project_id));
-        if(project == null){
-            User user = (User) session.getAttribute("user");
-            if(user.isAdmin())
-                return "redirect:/admin";
-            else
-                return "redirect:/user";
+        if(project.getTargetEndDate().before(new Date())){
+            model.addAttribute("projectEnded", "The project has ended. Cannot report an issue");
+            model.addAttribute("manager", project.getManager());
+            model.addAttribute("project", project);
+            model.addAttribute("developers", project.getDevelopers());
+            model.addAttribute("issues", project.getIssues());
+            model.addAttribute("unassignedDevelopers", userDAO.findUnassignedUsersProject(project));
+            return "project-details";
         }
-//        return "create-issue";
-        List<User> developers = project.getDevelopers();
-        model.addAttribute("developers", developers);
+
+        User user = (User) session.getAttribute("user");
+
+        List<User> developers = new ArrayList<User>();
+        List<String> issueTypes = new ArrayList<>(Arrays.asList("Bug", "Task", "Error"));
+        model.addAttribute("developers", project.getDevelopers());
         model.addAttribute("manager", project.getManager());
         model.addAttribute("project", project);
+        model.addAttribute("issueTypes", issueTypes);
+        model.addAttribute("issue", new Issue());
         return "create-issue";
     }
 
     @PostMapping("/project/{project_id}/issues/submit-issue")
     public String submitIssue(@PathVariable(name = "project_id") String project_id, HttpServletRequest request,
+                              @ModelAttribute("issue") @Valid Issue issue,BindingResult result, SessionStatus sessionStatus,
                               HttpSession session, ProjectDAO projectDAO, PriorityDAO priorityDAO,
-                              StatusDAO statusDAO, IssueDAO issueDAO, UserDAO userDAO){
-        try {
-            Integer.parseInt(project_id);
-        }catch (Exception e){
-            User user = (User) session.getAttribute("user");
-            if(user.isAdmin())
-                return "redirect:/admin";
-            else
-                return "redirect:/user";
-        }
-        Project project = projectDAO.findProjectById(Integer.parseInt(project_id));
-        if(project == null){
-            User user = (User) session.getAttribute("user");
-            if(user.isAdmin())
-                return "redirect:/admin";
-            else
-                return "redirect:/user";
-        }
+                              StatusDAO statusDAO, IssueDAO issueDAO, UserDAO userDAO, Model model){
 
-        Priority priority = priorityDAO.findByName(request.getParameter("priority"));
+        Project project = projectDAO.findProjectById(Integer.parseInt(project_id));
+        Map<String, String> error = new HashMap<>();
+
+        issueValidator.validate(issue, result);
+        if(result.hasErrors()){
+            List<String> issueTypes = new ArrayList<>(Arrays.asList("Bug", "Task", "Error"));
+            model.addAttribute("developers", project.getDevelopers());
+            model.addAttribute("manager", project.getManager());
+            model.addAttribute("project", project);
+            model.addAttribute("issueTypes", issueTypes);
+            model.addAttribute("issue", new Issue());
+//            model.addAttribute("error", error);
+            return "create-issue";
+        }
+        sessionStatus.setComplete();
+
+        String priorityValue = request.getParameter("priorityIssue");
+        if(priorityValue == null || priorityValue.trim().equals(""))
+            error.put("priority", "Please select priority!");
+        String assignToValue = request.getParameter("assignTo");
+        if(assignToValue == null || assignToValue.trim().equals(""))
+            error.put("assignTo", "Please select a developer to assign to");
+        if(error.size() > 0){
+            List<String> issueTypes = new ArrayList<>(Arrays.asList("Bug", "Task", "Error"));
+            model.addAttribute("developers", project.getDevelopers());
+            model.addAttribute("manager", project.getManager());
+            model.addAttribute("project", project);
+            model.addAttribute("issueTypes", issueTypes);
+            model.addAttribute("error", error);
+            model.addAttribute("issue", new Issue());
+            return "create-issue";
+        }
+        Priority priority = priorityDAO.findByName(request.getParameter("priorityIssue"));
+        if(priority == null)
+            error.put("priority", "Invalid Value");
         Status status = statusDAO.findByName("open");
         User assignTo = userDAO.findUserByUsername(request.getParameter("assignTo"));
+        if(assignTo == null)
+            error.put("assignTo", "Invalid Value");
         User openedBy = (User) session.getAttribute("user");
 
-        issueDAO.addIssue(request.getParameter("title"),request.getParameter("description"),
-                priority,status,request.getParameter("issueType"), assignTo, project,
+        if(error.size() > 0){
+            List<String> issueTypes = new ArrayList<>(Arrays.asList("Bug", "Task", "Error"));
+            model.addAttribute("developers", project.getDevelopers());
+            model.addAttribute("manager", project.getManager());
+            model.addAttribute("project", project);
+            model.addAttribute("issueTypes", issueTypes);
+            model.addAttribute("issue", new Issue());
+            return "create-issue";
+        }
+
+        issueDAO.addIssue(issue.getTitle(),issue.getDescription(),
+                priority,status,issue.getIssueType(), assignTo, project,
                 openedBy);
         Email email = new HtmlEmail();
         email.setHostName("smtp.gmail.com");
@@ -125,27 +159,8 @@ public class IssueController {
                                @PathVariable(name = "issue_id") String issue_id,
                                ProjectDAO projectDAO, IssueDAO issueDAO, HttpSession session,
                                Model model){
-        try {
-            Integer.parseInt(project_id);
-            Integer.parseInt(issue_id);
-        }catch (Exception e){
-            User user = (User) session.getAttribute("user");
-            if(user.isAdmin())
-                return "redirect:/admin";
-            else
-                return "redirect:/user";
-        }
-        Project project = projectDAO.findProjectById(Integer.parseInt(project_id));
-        Issue issue = issueDAO.findById(Integer.parseInt(issue_id));
-        if(project == null || issue == null){
-            User user = (User) session.getAttribute("user");
-            if(user.isAdmin())
-                return "redirect:/admin";
-            else
-                return "redirect:/user";
-        }
 
-
+        Issue issue = issueDAO.findById(Long.parseLong(issue_id));
         model.addAttribute("issue", issue);
         return "issue-details";
     }
@@ -154,15 +169,7 @@ public class IssueController {
     public String resolveIssue(@PathVariable(name = "issue_id") String issue_id,
                                HttpServletRequest request, HttpSession session, IssueDAO issueDAO,
                                StatusDAO statusDAO, Model model){
-        try {
-            Integer.parseInt(issue_id);
-        }catch (Exception e){
-            User user = (User) session.getAttribute("user");
-            if(user.isAdmin())
-                return "redirect:/admin";
-            else
-                return "redirect:/user";
-        }
+
         Issue issue = issueDAO.findById(Long.parseLong(issue_id));
         if(issue == null)
             return "redirect:/user/dashboard";
@@ -172,6 +179,33 @@ public class IssueController {
         User user = (User) session.getAttribute("user");
         Status status = statusDAO.findByName("closed");
         issueDAO.resolveIssue(resolutionSummary,issue,user,status);
+
+        Email email = new HtmlEmail();
+        email.setHostName("smtp.gmail.com");
+        email.setSmtpPort(465);
+        email.setAuthenticator(new DefaultAuthenticator("bts.info6250", "msiscsye2020?"));
+        email.setSSLOnConnect(true);
+        try {
+            email.setFrom("bts.info6250@gmail.com");
+            email.setSubject("Bug-Tracker :: Issue resolved");
+            email.setMsg("Hello "+issue.getOpenedBy().getName()+","+"\n"+
+                    "Your issue was resolved by "+issue.getClosedBy().getUsername()+"\n"+
+                    "ISSUE DETAILS" + "\n" +
+                    "Issue Title: " +issue.getTitle() + "\n" +
+                    "Description: "+issue.getDescription()+ "\n" +
+                    "Priority: " + issue.getPriority().getName() + "\n" +
+                    "Status: " +issue.getStatus().getName()+ "\n" +
+                    "Issue Type: "+ issue.getIssueType() + "\n" +
+                    "Associated Project ID: " + issue.getProject().getId() +"\n"+
+                    "Project Manager: "+ issue.getProject().getManager().getUsername() + "\n" +
+                    "Closed By: "+ issue.getClosedBy().getName() + " (" + issue.getClosedBy().getUsername()+")" + "\n"+
+                    "Closed On: "+issue.getClosedOn().toLocaleString());
+            email.addTo(issue.getOpenedBy().getUsername());
+            email.send();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         model.addAttribute("issue", issue);
         return "issue-details";
 
@@ -180,17 +214,10 @@ public class IssueController {
     @GetMapping("/project/{project_id}/issues/{issue_id}/edit-issue")
     public String editIssue(@PathVariable(name = "issue_id") String issue_id,
                             @PathVariable(name = "project_id") String project_id,
-                            IssueDAO issueDAO, ProjectDAO projectDAO, Model model, PriorityDAO priorityDAO){
-        try {
-            Long.parseLong(issue_id);
-            Integer.parseInt(project_id);
-        }catch (Exception e){
-            return "not-found";
-        }
+                            IssueDAO issueDAO, ProjectDAO projectDAO, Model model, PriorityDAO priorityDAO,
+                            HttpSession session){
         Issue issue = issueDAO.findById(Long.parseLong(issue_id));
         Project project = projectDAO.findProjectById(Integer.parseInt(project_id));
-        if(issue == null || project == null) return "not-found";
-
         List<String> priorities = priorityDAO.findAllPriorities();
 
         String[] issueTypes = {"Bug", "Error", "Task"};
@@ -208,15 +235,10 @@ public class IssueController {
                                HttpServletRequest request, IssueDAO issueDAO,
                                ProjectDAO projectDAO, Model model, PriorityDAO priorityDAO,
                                UserDAO userDAO){
-        try{
-            Long.parseLong(issue_id);
-            Integer.parseInt(project_id);
-        }catch (Exception e){
-            return "not-found";
-        }
+
         Issue issue = issueDAO.findById(Long.parseLong(issue_id));
         Project project = projectDAO.findProjectById(Integer.parseInt(project_id));
-        if(issue == null || project == null) return "not-found";
+
         Map<String, String> errors = new HashMap<>();
         String description = request.getParameter("description");
         if(description == null || description.trim().equals(""))
@@ -283,11 +305,45 @@ public class IssueController {
         }
 
         issueDAO.updateIssue(issue);
-
-
-
         return "redirect:/user/dashboard";
 
     }
 
+    @PostMapping(value = "/user/{user_id}/issues")
+    public String getMyIssues(@PathVariable(name = "user_id") String user_id,
+                                 UserDAO userDAO, HttpServletRequest request, Model model){
+        String filter = request.getParameter("filter");
+        User user = userDAO.findById(UUID.fromString(user_id));
+        if(user == null || filter == null || filter.trim().equals("")) return "not-found";
+
+        List<Issue> issues;
+        if(filter.equals("assigned"))
+            issues = user.getAssignedIssues();
+        else if(filter.equals("opened"))
+            issues = user.getOpenedIssues();
+        else if(filter.equals("all")) {
+            Set<Issue> temp = user.getAllIssues();
+            issues = new ArrayList<>(temp);
+        }
+        else
+            return "not-found";
+
+        model.addAttribute("issues", issues);
+        model.addAttribute("filter", filter);
+        return "issues-assigned";
+    }
+
+    @GetMapping("/project/{project_id}/issues/{issue_id}/delete-issue")
+    public String deleteIssue(@PathVariable(name = "project_id") String project_id,
+                              @PathVariable(name = "issue_id") String issue_id, ProjectDAO projectDAO,
+                              IssueDAO issueDAO, IssueCommentDAO issueCommentDAO){
+
+        Issue issue = issueDAO.findById(Long.parseLong(issue_id));
+
+        issueCommentDAO.deleteCommentsIssue(issue.getId());
+//        issue.setComments(null);
+        issue = issueDAO.findById(Integer.parseInt(issue_id));
+        issueDAO.deleteIssue(issue, issueCommentDAO);
+        return "redirect:/user/dashboard";
+    }
 }

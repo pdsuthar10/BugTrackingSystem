@@ -69,10 +69,111 @@ function addTableComment(comment){
         cell3.innerHTML = comment.commentedBy;
         cell4.innerHTML = comment.createdOn;
     }
+}
+
+function issuesFilterChange(username){
+    event.preventDefault();
+    let valueNow = $("#filter").val();
+    let valuesPossible = [ "all", "opened", "assigned", "open", "closed", "allIssues" ]
+    if(!valuesPossible.includes(valueNow)) return;
+    sendRequest("POST",'/bts/api/user/'+username+'/issues',valueNow, populateIssues)
 
 }
 
-function issuesFilterChange(){
+function searchChange(){
+    event.preventDefault();
+    let valueNow = $("#searchIssue").val();
+    if(valueNow === "")
+        valueNow = "all"
+    sendRequest("POST", '/bts/api/user/issues', valueNow, populateIssues)
+}
+
+function issuesFilterChangeProject(project_id, user_id){
+    event.preventDefault();
     let valueNow = $("#filter").val();
-    console.log(valueNow);
+    let valuesPossible = [ "all", "open", "closed"]
+    if(!valuesPossible.includes(valueNow)) return;
+    sendRequest("POST",'/bts/api/user/'+user_id+'/project/'+project_id+'/issues',valueNow, populateIssues)
+}
+
+function populateIssues(data){
+    data = data.myArrayList
+    $("#issueList").empty();
+    if(data == undefined || data == null || data.length == 0){
+        let tbody = document.getElementById("issueList");
+        let row = tbody.insertRow();
+        let noresult = row.insertCell(0);
+        noresult.innerHTML = "No issues found in this category!"
+        noresult.setAttribute("colSpan", 12);
+        noresult.setAttribute("align", "center");
+        return
+    }
+    let tbody = document.getElementById("issueList");
+    data.forEach( issueObject => {
+        let issue = issueObject.map;
+        let row = tbody.insertRow();
+        let issueId = row.insertCell(0);
+        issueId.innerHTML = issue.issueId;
+        let projectId = row.insertCell(1);
+        projectId.innerHTML = issue.projectId;
+        let title = row.insertCell(2);
+        title.innerHTML = issue.title;
+        let description = row.insertCell(3);
+        description.innerHTML = issue.description;
+        let status = row.insertCell(4);
+        status.innerHTML = issue.status;
+        let issueType = row.insertCell(5);
+        issueType.innerHTML = issue.issueType;
+        let priority = row.insertCell(6);
+        priority.innerHTML = issue.priority;
+        let openedBy = row.insertCell(7);
+        openedBy.innerHTML = issue.openedBy;
+        let assignedTo = row.insertCell(8);
+        assignedTo.innerHTML = issue.assignedTo;
+        let createdOn = row.insertCell(9);
+        createdOn.innerHTML = issue.createdOn;
+        let modifiedOn = row.insertCell(10);
+        modifiedOn.innerHTML = issue.modifiedOn;
+        let action = row.insertCell(11);
+        let viewLink = document.createElement("a");
+        viewLink.setAttribute("href", issue.viewLink);
+        viewLink.innerHTML = "View";
+        action.append(viewLink);
+        if(!(issue.editLink == undefined || issue.editLink == null || issue.editLink === "")){
+            let text = document.createTextNode("\u00A0|\u00A0");
+            action.append(text);
+            let editLink = document.createElement("a");
+            editLink.setAttribute("href", issue.editLink);
+            editLink.innerHTML = "Edit";
+            action.append(editLink);
+        }
+
+        if(!(issue.deleteLink == undefined || issue.deleteLink == null || issue.deleteLink === "")){
+            let text = document.createTextNode("\u00A0|\u00A0");
+            action.append(text);
+            let deleteLink = document.createElement("a");
+            deleteLink.setAttribute("href", issue.deleteLink);
+            deleteLink.innerHTML = "Delete";
+            action.append(deleteLink);
+        }
+
+    })
+
+
+}
+
+function sendRequest(method, url, dataToSend, callback){
+    let xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+            callback(JSON.parse(this.response));
+        }
+    };
+
+    xhttp.open(method, url, true);
+    if(method === "POST") {
+        xhttp.setRequestHeader("Content-type", "application/json");
+        xhttp.send(dataToSend);
+    }else
+        xhttp.send();
 }

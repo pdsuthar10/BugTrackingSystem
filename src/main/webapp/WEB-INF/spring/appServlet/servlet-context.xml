@@ -33,7 +33,18 @@
 			<mvc:mapping path="/user/**"/>
 			<beans:bean class="com.info6250.bts.interceptor.UserInterceptor"/>
 		</mvc:interceptor>
+		<mvc:interceptor>
+			<mvc:mapping path="/project/**"/>
+			<beans:bean class="com.info6250.bts.interceptor.ProjectInterceptor"/>
+		</mvc:interceptor>
 	</mvc:interceptors>
-	
+
+	<beans:bean id="messageSource" class="org.springframework.context.support.ResourceBundleMessageSource">
+		<beans:property name="basename" value="messages"/>
+	</beans:bean>
+
+	<beans:bean id="validator" class="org.springframework.validation.beanvalidation.LocalValidatorFactoryBean">
+		<beans:property name="validationMessageSource" ref="messageSource"/>
+	</beans:bean>
 	
 </beans:beans>

@@ -1,13 +1,13 @@
 package com.info6250.bts.controller;
 
-import java.text.DateFormat;
-import java.util.Date;
-import java.util.Locale;
 
+import com.info6250.bts.pojo.User;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
+
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+
+import javax.servlet.http.HttpSession;
 
 /**
  * Handles requests for the application home page.
@@ -19,16 +19,17 @@ public class HomeController {
 	 * Simply selects the home view to render by returning its name.
 	 */
 	@RequestMapping(value = "/", method = RequestMethod.GET)
-	public String home(Locale locale, Model model) {
+	public String home(HttpSession session) {
 		
-		Date date = new Date();
-		DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.LONG, locale);
-		
-		String formattedDate = dateFormat.format(date);
-		
-		model.addAttribute("serverTime", formattedDate );
-		
-		return "login";
+		User user = (User) session.getAttribute("user");
+		if(user == null){
+			return "login";
+		}else{
+			if(user.isAdmin())
+				return "redirect:/admin";
+			else
+				return "redirect:/user/dashboard";
+		}
 	}
 	
 }

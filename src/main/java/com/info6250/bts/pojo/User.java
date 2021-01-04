@@ -7,28 +7,21 @@ import org.hibernate.annotations.UpdateTimestamp;
 import javax.persistence.*;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Entity
 @Table(name = "users", schema = "btsdb")
-public class User implements Serializable{
-
-//    @Id
-//    @Column(name = "UserID")
-//    @GeneratedValue(generator = "UUID")
-//    @GenericGenerator(
-//            name = "UUID",
-//            strategy = "org.hibernate.id.UUIDGenerator"
-//    )
-//    private UUID userId;
+public class User{
 
     @Id
-    @Column(name = "UserID")
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private int userId;
+    @Column(name = "UserID", columnDefinition = "BINARY(16)")
+    @GeneratedValue(generator = "UUID")
+    @GenericGenerator(
+            name = "UUID",
+            strategy = "org.hibernate.id.UUIDGenerator"
+    )
+    private UUID userId;
+
     private String username;
     private String password;
     private String name;
@@ -66,8 +59,17 @@ public class User implements Serializable{
         return openedIssues;
     }
 
-    public List<Issue> getAllIssues(){
-        List<Issue> issues = new ArrayList<>();
+    public List<Project> getProjectsManagedByMe(){
+        List<Project> projects = new ArrayList<>();
+        for(Project_User_Role p : this.getProjects()){
+            if(p.getRole().getName().equals("manager"))
+                projects.add(p.getProject());
+        }
+        return projects;
+    }
+
+    public Set<Issue> getAllIssues(){
+        Set<Issue> issues = new HashSet<>();
         for(Issue issue : this.getAssignedIssues())
             issues.add(issue);
         for(Issue issue : this.getOpenedIssues())
@@ -88,11 +90,11 @@ public class User implements Serializable{
         this.getOpenedIssues().remove(this.getOpenedIssues().indexOf(issue));
     }
 
-    public int getUserId() {
+    public UUID getUserId() {
         return userId;
     }
 
-    public void setUserId(int userId) {
+    public void setUserId(UUID userId) {
         this.userId = userId;
     }
 

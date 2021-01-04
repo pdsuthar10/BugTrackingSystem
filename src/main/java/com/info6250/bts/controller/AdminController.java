@@ -1,30 +1,29 @@
 package com.info6250.bts.controller;
 
+import com.info6250.bts.analytics.PdfView;
 import com.info6250.bts.dao.*;
 import com.info6250.bts.pojo.Issue;
 import com.info6250.bts.pojo.Project;
-import com.info6250.bts.pojo.Project_User_Role;
 import com.info6250.bts.pojo.User;
 import com.info6250.bts.validator.ProjectFormValidator;
-import org.apache.commons.validator.GenericValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.ui.ModelMap;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.support.SessionStatus;
+import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
-
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 @Controller
@@ -35,22 +34,22 @@ public class AdminController {
     @Autowired
     ProjectUserRoleDAO projectUserRoleDAO;
 
+    @GetMapping("/analytics.pdf")
+    public ModelAndView pdfView(IssueDAO issueDAO, ModelMap modelMap, ProjectDAO projectDAO){
+        List<Issue> allIssues = issueDAO.findAllIssues();
+        modelMap.addAttribute("issues", allIssues);
+        modelMap.addAttribute("projects", projectDAO.findAllProjects());
+        return new ModelAndView(new PdfView(), modelMap);
+    }
+
 
     @GetMapping("/admin")
     public String adminDashboard(Model model, ProjectDAO projectDao, IssueDAO issueDAO){
 
         List<Project> projects = projectDao.findAllProjects();
         List<Issue> issues = issueDAO.findAllIssues();
-//        Map<Integer, User> managerMap = new HashMap<Integer, User>();
-//        for(Project p : projects){
-//            projectDao.getSession().refresh(p);
-//            Project_User_Role pu = projectUserRoleDAO.findByProjectIDAndRole(p.getId(),"manager");
-//            managerMap.put(p.getId(),pu.getUser());
-//        }
         model.addAttribute("projects", projects);
         model.addAttribute("issues", issues);
-//        model.addAttribute("managerMap", managerMap);
-//        model.addAttribute("projectUserRoleDAO", projectUserRoleDAO);
         return "admin";
     }
 
@@ -73,14 +72,13 @@ public class AdminController {
         Project project = projectDao.findProjectById(Integer.parseInt(id));
         projectDao.getSession().refresh(project);
         if(project == null) return "redirect:/admin";
-        System.out.println("validator........ page return");
-        System.out.println(project.getId()+", "+project.getName()+", "+project.getStartDate()+
-                ", "+project.getTargetEndDate()+", "+project.getManager().getName());
-        List<User> users = userDao.findUnassignedUsersProject(project);
+
+        List<User> users = userDao.findUnassignedUsersProject(project);       
         users.add(project.getManager());
         model.addAttribute("project",project);
         model.addAttribute("manager", project.getManager());
         model.addAttribute("users", users);
+       
         return "edit-project";
     }
 
@@ -88,7 +86,7 @@ public class AdminController {
     public String submitChange(@PathVariable(name = "project_id")String id, ProjectDAO projectDao,
                                HttpServletRequest request, Model model, UserDAO userDao,
                                RoleDAO roleDao, ProjectUserRoleDAO projectUserRoleDao,
-                               @ModelAttribute("project") Project projectToValidate, BindingResult result,
+                               @Valid @ModelAttribute("project") Project projectToValidate, BindingResult result,
                                SessionStatus status, RedirectAttributes redirectAttributes) throws ParseException {
 
         try{
@@ -110,7 +108,6 @@ public class AdminController {
 
         Map<String, String> error = new HashMap<String, String>();
         String manager = request.getParameter("manager");
-        System.out.println("manager: "+manager);
         if(manager == null || manager.trim().equals(""))
             error.put("manager", "Please select a manager!");
 
@@ -125,10 +122,7 @@ public class AdminController {
         project.setStartDate(projectToValidate.getStartDate());
         project.setTargetEndDate(projectToValidate.getTargetEndDate());
         User user = userDao.findUserByUsername(manager);
-//        project.updateManager(user);
-//        projectToValidate.setId(project.getId());
-        System.out.println("in edit project.......");
-        System.out.println(projectToValidate);
+
         projectDao.updateProject(project, user, roleDao, projectUserRoleDao);
         if(!project.getManager().getUsername().equals(user.getUsername())) projectUserRoleDao.updateManager(project, user);
 
@@ -151,11 +145,11 @@ public class AdminController {
         }
 
         status.setComplete();
-        System.out.println("After errors resolved....");
+
         Map<String, String> error = new HashMap<String, String>();
 
         String manager = request.getParameter("manager");
-        System.out.println("manager: "+manager);
+
         if(manager == null || manager.trim().equals(""))
             error.put("manager", "Please select a manager!");
 
@@ -165,7 +159,7 @@ public class AdminController {
             return "create-project";
         }
 
-        System.out.println("After error.size resolved....");
+
         projectDao.addProject(projectToValidate, userDao.findUserByUsername(manager), roleDao, projectUserRoleDao);
         model.addAttribute("projects", projectDao.findAllProjects());
         return "redirect:/admin";
@@ -184,5 +178,20 @@ public class AdminController {
         return "redirect:/admin";
     }
 
+    @GetMapping("/admin/delete-project/{project_id}")
+    public String deleteProject(@PathVariable(name = "project_id") String project_id,
+                                ProjectDAO projectDAO){
+        int id;
+        try{
+            id = Integer.parseInt(project_id);
+        }catch (Exception e){
+            return "redirect:/not-found";
+        }
+        Project project = projectDAO.findProjectById(id);
+        if(project == null) return "redirect:/not-found";
+
+        projectDAO.deleteProject(project);
+        return "redirect:/admin";
+    }
 
 }

@@ -7,7 +7,6 @@ import com.info6250.bts.pojo.User;
 import org.hibernate.query.Query;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Repository;
-import org.springframework.stereotype.Service;
 
 //import javax.persistence.Query;
 import java.util.*;
@@ -27,7 +26,7 @@ public class UserDAO extends DAO{
         return null;
     }
 
-    public User findById(int id){
+    public User findById(UUID id){
         String hql = "FROM User where userId =: id";
         Query query = getSession().createQuery(hql).setParameter("id",id);
         return (User) query.uniqueResult();

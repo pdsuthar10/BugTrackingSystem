@@ -14,6 +14,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
 </head>
 <body>
+<jsp:include page="navbar.jsp"/>
 <div class="container shadow p-3 mb-5 bg-white rounded">
     <h1>Issue Details for Issue ID: ${issue.id}</h1>
     <ul>
@@ -44,7 +45,9 @@
             Add a comment
         </button>
     </c:if>
-    <c:if test='${sessionScope.user.username.equals(issue.assignedTo.username) && issue.status.name.equals("open")}'>
+    <c:if test='${(sessionScope.user.admin || sessionScope.user.username.equals(issue.project.manager.username)
+     || sessionScope.user.username.equals(issue.assignedTo.username))
+            && issue.status.name.equals("open")}'>
         <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#resolveModal">
             Resolve Issue
         </button>

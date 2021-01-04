@@ -11,8 +11,7 @@ public class XSSRequestWrapper extends HttpServletRequestWrapper {
      */
 
     private static Pattern[] patterns = new Pattern[]{
-            // Script fragments
-//            Pattern.compile("<script>(.*?)</script>", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("<script>(.*?)</script>", Pattern.CASE_INSENSITIVE),
             // src='...'
             Pattern.compile("src[\r\n]*=[\r\n]*\\\'(.*?)\\\'", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL),
             Pattern.compile("src[\r\n]*=[\r\n]*\\\"(.*?)\\\"", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL),
@@ -37,19 +36,17 @@ public class XSSRequestWrapper extends HttpServletRequestWrapper {
 
     @Override
     public String[] getParameterValues(String parameter) {
-        String[] values = super.getParameterValues(parameter);
+        String[] parameterValues = super.getParameterValues(parameter);
 
-        if (values == null) {
-            return null;
+        if (parameterValues == null) return null;
+
+        int numberOfValues = parameterValues.length;
+        String[] cleaned = new String[numberOfValues];
+        for (int i = 0; i < numberOfValues; i++) {
+            cleaned[i] = stripXSS(parameterValues[i]);
         }
 
-        int count = values.length;
-        String[] encodedValues = new String[count];
-        for (int i = 0; i < count; i++) {
-            encodedValues[i] = stripXSS(values[i]);
-        }
-
-        return encodedValues;
+        return cleaned;
     }
 
     @Override
@@ -67,33 +64,11 @@ public class XSSRequestWrapper extends HttpServletRequestWrapper {
 
     private String stripXSS(String value) {
         if (value != null) {
-            // NOTE: It's highly recommended to use the ESAPI library and uncomment the following line to
-            // avoid encoded attacks.
-//             value = ESAPI.encoder().canonicalize(value);
-//             value = ESAPI.encoder().encodeForHTML(value);
-
-            // Avoid null characters
             value = value.replaceAll("", "");
 
-            // Remove all sections that match a pattern
             for (Pattern scriptPattern : patterns){
                 value = scriptPattern.matcher(value).replaceAll("");
             }
-
-//            System.out.println("Before : " + value);
-//            		value = value.replaceAll("eval\\((.*)\\)", "");
-//            		value = value.replaceAll("[\\\"\\\'][\\s]javascript:(.)[\\\"\\\']", "\"\"");
-//                    value = value.replaceAll("<script.*?>","");
-//                    value = value.replaceAll("</script.*?>","");
-//                    value = value.replaceAll("</sql.*?>","");
-//                    value = value.replaceAll("<sql.*?>","");
-//                    value = value.replaceAll("\\*","_");
-//                    value = value.replaceAll("=","_");
-//                    value = value.replaceAll("\\?","_");
-//                    value = value.replaceAll(",","_");
-//
-//            System.out.println("After" + value);
-
         }
         return value;
     }

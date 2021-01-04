@@ -15,8 +15,14 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
 </head>
 <body>
+<jsp:include page="navbar.jsp"/>
 <div class="container">
 <h1>Project Details</h1>
+<c:if test="${projectEnded.length() > 0}">
+    <div class="alert alert-danger" role="alert">
+        ${projectEnded}
+    </div>
+</c:if>
 <ul>
     <li>Project ID: ${project.id}</li>
     <li>Name: ${project.name}</li>
@@ -58,15 +64,23 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <form action="/bts/project/${project.id}/add-developers" method="post">
-                                <label for="developersSelected" class="form-label">Select developer(s) to add</label>
-                                <select name="developersSelected" multiple id="developersSelected" class="form-select" required>
-                                    <c:forEach var="d" items="${unassignedDevelopers}">
-                                        <option value="${d.username}">${d.name} (${d.username})</option>
-                                    </c:forEach>
-                                </select>
-                            <button type="submit" class="btn btn-success">Add</button>
-                        </form>
+                        <c:choose>
+                            <c:when test="${unassignedDevelopers.size() > 0}">
+                                <form action="/bts/project/${project.id}/add-developers" method="post">
+                                    <label for="developersSelected" class="form-label">Select developer(s) to add</label>
+                                    <select name="developersSelected" multiple id="developersSelected" class="form-select" required>
+                                        <c:forEach var="d" items="${unassignedDevelopers}">
+                                            <option value="${d.username}">${d.name} (${d.username})</option>
+                                        </c:forEach>
+                                    </select>
+                                    <button type="submit" class="btn btn-success">Add</button>
+                                </form>
+                            </c:when>
+                            <c:otherwise>
+                                <p>No developers to add!</p>
+                            </c:otherwise>
+                        </c:choose>
+
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -113,7 +127,18 @@
         <h4 style="color: green"><b>No issues created for this project!</b></h4>
     </c:when>
     <c:otherwise>
-        <h4>Issues/Tickets:</h4>
+        <div class="row">
+            <div class="col">
+                <h4>Issues/Tickets:</h4>
+            </div>
+            <div class="col" style="text-align: right">
+                <select name="filter" id="filter" onchange="issuesFilterChangeProject('${project.id}','${sessionScope.user.userId}')">
+                    <option value="all">All</option>
+                    <option value="open">Open</option>
+                    <option value="closed">Closed</option>
+                </select>
+            </div>
+        </div>
         <table class="table table-striped table-hover">
             <thead>
                 <tr>
@@ -130,7 +155,7 @@
                     <th>Action</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="issueList">
                 <c:forEach var="issue" items="${issues}">
                     <tr>
                         <td>${issue.id}</td>
@@ -162,5 +187,6 @@
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-ygbV9kiqUc6oa4msXn9868pTtWMgiQaeYH7/t7LECLbyPA2x65Kgf80OJFdroafW" crossorigin="anonymous"></script>
 <script type="text/javascript" src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+<script src="<%=request.getContextPath()%>/resources/js/issues.js"></script>
 </body>
 </html>

@@ -20,6 +20,7 @@
 			<label for="password" class="form-label">Password: </label>
 			<input id="password" type="password" name="password" class="form-control">
 		</div>
+		<p style="color: red"><b>${error}</b></p>
 		<button type="submit" class="btn btn-primary">Login</button>
 		<a href="sign-up.htm">Click here to sign up</a><br/>
 	</form>

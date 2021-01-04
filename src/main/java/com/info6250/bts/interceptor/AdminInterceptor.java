@@ -13,7 +13,7 @@ public class AdminInterceptor implements HandlerInterceptor {
         HttpSession session = request.getSession();
         User user = (User) session.getAttribute("user");
         if(user == null) {
-            response.sendRedirect("http://localhost:8080/bts/");
+            response.sendRedirect("http://localhost:8080/bts/unauthorized");
             return false;
         }
         else
@@ -21,7 +21,7 @@ public class AdminInterceptor implements HandlerInterceptor {
             if(user.isAdmin())
                 return true;
             else{
-                response.sendRedirect("http://localhost:8080/bts/");
+                response.sendRedirect("http://localhost:8080/bts/user/dashboard");
                 return false;
             }
         }
